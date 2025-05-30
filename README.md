@@ -11,3 +11,11 @@ To enable Pages on your fork:
 3. Choose **GitHub Actions** as the source and save.
 
 After the workflow runs successfully, the tester will be available at `https://<username>.github.io/<repository>/`.
+
+## Customizing Host Categories
+
+The list of hosts that are tested is stored in `categories.json`. Each entry in
+the JSON file has a `name` and an array of `hosts` URLs. You can add new
+categories or remove hosts by editing this file as long as the JSON structure is
+kept intact. The page will fetch `categories.json` at runtime, so any changes
+take effect the next time the page is loaded.

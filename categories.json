@@ -1,0 +1,28 @@
+[
+  {
+    "name": "Advertising",
+    "hosts": [
+      "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js",
+      "https://adservice.google.com/adsid/integrator.js",
+      "https://static.doubleclick.net/adx/js/impl.js",
+      "https://securepubads.g.doubleclick.net/tag/js/gpt.js"
+    ]
+  },
+  {
+    "name": "Analytics / Trackers",
+    "hosts": [
+      "https://www.google-analytics.com/analytics.js",
+      "https://stats.g.doubleclick.net/dc.js",
+      "https://cdn.segment.com/analytics.js/v1/foobar",
+      "https://ssl.google-analytics.com/ga.js"
+    ]
+  },
+  {
+    "name": "Social Widgets",
+    "hosts": [
+      "https://connect.facebook.net/en_US/sdk.js",
+      "https://static.ads-twitter.com/uwt.js",
+      "https://platform.linkedin.com/in.js"
+    ]
+  }
+]
