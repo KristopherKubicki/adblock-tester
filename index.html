@@ -22,6 +22,17 @@
       gap: 2rem;
     }
     h1 { margin: 0 0 0.5rem; text-align:center; }
+    #controls { text-align:center; }
+    button {
+      background:#3273dc;
+      border:0;
+      color:#fff;
+      padding:0.5rem 1rem;
+      border-radius:0.3rem;
+      font-weight:600;
+      cursor:pointer;
+    }
+    #progress { margin-top:0.5rem; font-size:0.9rem; }
     .category {
       background: var(--card);
       padding: 1rem 1.5rem;
@@ -52,6 +63,10 @@
 </head>
 <body>
   <h1>Ad‑block Quick Test</h1>
+  <div id="controls">
+    <button id="startTest">Start Test</button>
+    <div id="progress"></div>
+  </div>
   <div id="results"></div>
   <div id="summary"></div>
 
@@ -88,6 +103,9 @@
     ];
 
     const resultsEl = document.getElementById('results');
+    const startButton = document.getElementById('startTest');
+    const progressEl = document.getElementById('progress');
+    const summary = document.getElementById('summary');
 
     const createCategorySection = (cat) => {
       const wrapper = document.createElement('div');
@@ -104,7 +122,14 @@
       resultsEl.appendChild(wrapper);
     };
 
-    categories.forEach(createCategorySection);
+    const setup = () => {
+      resultsEl.innerHTML = '';
+      tested = 0;
+      blocked = 0;
+      summary.textContent = '';
+      progressEl.textContent = '';
+      categories.forEach(createCategorySection);
+    };
 
     let tested = 0;
     let blocked = 0;
@@ -132,13 +157,20 @@
         const span = document.querySelector(`[data-host="${h}"]`);
         span.textContent = isBlocked ? 'Blocked' : 'Allowed';
         span.classList.add(isBlocked ? 'ok' : 'fail');
+        progressEl.textContent = `${tested} of ${allHosts.length} tested`;
       }
       const pct = Math.round((blocked / tested) * 100);
-      const summary = document.getElementById('summary');
       summary.textContent = `Blocked ${blocked} / ${tested} (${pct}%)`;
+      startButton.disabled = false;
+      startButton.textContent = 'Restart';
     };
 
-    run();
+    startButton.addEventListener('click', () => {
+      startButton.disabled = true;
+      startButton.textContent = 'Testing…';
+      setup();
+      run();
+    });
   </script>
 </body>
 </html>
