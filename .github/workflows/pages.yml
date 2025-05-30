@@ -20,9 +20,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Upload site artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-pages-artifact@v1
         with:
-          name: github-pages
           path: '.'
   deploy:
     needs: build
