@@ -125,14 +125,16 @@
 
     const run = async () => {
       const allHosts = categories.flatMap(c => c.hosts);
-      for (const h of allHosts) {
-        const isBlocked = await testHost(h);
-        tested++;
-        if (isBlocked) blocked++;
-        const span = document.querySelector(`[data-host="${h}"]`);
-        span.textContent = isBlocked ? 'Blocked' : 'Allowed';
-        span.classList.add(isBlocked ? 'ok' : 'fail');
-      }
+      const promises = allHosts.map((h) =>
+        testHost(h).then((isBlocked) => {
+          tested++;
+          if (isBlocked) blocked++;
+          const span = document.querySelector(`[data-host="${h}"]`);
+          span.textContent = isBlocked ? 'Blocked' : 'Allowed';
+          span.classList.add(isBlocked ? 'ok' : 'fail');
+        })
+      );
+      await Promise.all(promises);
       const pct = Math.round((blocked / tested) * 100);
       const summary = document.getElementById('summary');
       summary.textContent = `Blocked ${blocked} / ${tested} (${pct}%)`;
