@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ad‑block Quick Test</title>
+  <style>
+    :root {
+      font-family: system-ui, sans-serif;
+      --bg: #111;
+      --card: #1e1e1e;
+      --ok: #48c774;
+      --fail: #ff3860;
+    }
+    body {
+      margin: 0;
+      padding: 2rem;
+      background: var(--bg);
+      color: #eee;
+      display: grid;
+      place-content: center;
+      gap: 2rem;
+    }
+    h1 { margin: 0 0 0.5rem; text-align:center; }
+    .category {
+      background: var(--card);
+      padding: 1rem 1.5rem;
+      border-radius: 0.75rem;
+      box-shadow: 0 0 8px rgba(0,0,0,.6);
+    }
+    .category h2 { margin: 0 0 0.5rem; font-size: 1rem; text-transform: uppercase; letter-spacing: .05em; }
+    .host {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.35rem 0;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      font-size: .85rem;
+    }
+    .host:first-of-type { border-top: 0; }
+    .status {
+      font-weight: 600;
+    }
+    .status.ok { color: var(--ok); }
+    .status.fail { color: var(--fail); }
+    #summary {
+      text-align:center;
+      font-size:1.25rem;
+      font-weight:700;
+    }
+  </style>
+</head>
+<body>
+  <h1>Ad‑block Quick Test</h1>
+  <div id="results"></div>
+  <div id="summary"></div>
+
+  <script>
+    /* List is intentionally short & focused so the page loads fast.
+       You can extend it by editing categories below.                */
+    const categories = [
+      {
+        name: 'Advertising',
+        hosts: [
+          'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js',
+          'https://adservice.google.com/adsid/integrator.js',
+          'https://static.doubleclick.net/adx/js/impl.js',
+          'https://securepubads.g.doubleclick.net/tag/js/gpt.js'
+        ]
+      },
+      {
+        name: 'Analytics / Trackers',
+        hosts: [
+          'https://www.google-analytics.com/analytics.js',
+          'https://stats.g.doubleclick.net/dc.js',
+          'https://cdn.segment.com/analytics.js/v1/foobar',
+          'https://ssl.google-analytics.com/ga.js'
+        ]
+      },
+      {
+        name: 'Social Widgets',
+        hosts: [
+          'https://connect.facebook.net/en_US/sdk.js',
+          'https://static.ads-twitter.com/uwt.js',
+          'https://platform.linkedin.com/in.js'
+        ]
+      }
+    ];
+
+    const resultsEl = document.getElementById('results');
+
+    const createCategorySection = (cat) => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'category';
+      const title = document.createElement('h2');
+      title.textContent = cat.name;
+      wrapper.appendChild(title);
+      cat.hosts.forEach((h) => {
+        const row = document.createElement('div');
+        row.className = 'host';
+        row.innerHTML = `<span>${h.replace(/https?:\/\//,'')}</span><span class="status" data-host="${h}">…</span>`;
+        wrapper.appendChild(row);
+      });
+      resultsEl.appendChild(wrapper);
+    };
+
+    categories.forEach(createCategorySection);
+
+    let tested = 0;
+    let blocked = 0;
+
+    // Test helper – use Image so we can rely on onerror/onload.
+    const testHost = (url) => new Promise((resolve) => {
+      const img = new Image();
+      const timer = setTimeout(() => {
+        img.src = '';
+        resolve(true); // treat as blocked on timeout
+      }, 5000);
+
+      img.onerror = () => { clearTimeout(timer); resolve(true); };
+      img.onload  = () => { clearTimeout(timer); resolve(false); };
+      // Tweak: add cache‑buster so the request isn’t cached between runs
+      img.src = url + (url.includes('?') ? '&' : '?') + 'cb=' + Date.now();
+    });
+
+    const run = async () => {
+      const allHosts = categories.flatMap(c => c.hosts);
+      for (const h of allHosts) {
+        const isBlocked = await testHost(h);
+        tested++;
+        if (isBlocked) blocked++;
+        const span = document.querySelector(`[data-host="${h}"]`);
+        span.textContent = isBlocked ? 'Blocked' : 'Allowed';
+        span.classList.add(isBlocked ? 'ok' : 'fail');
+      }
+      const pct = Math.round((blocked / tested) * 100);
+      const summary = document.getElementById('summary');
+      summary.textContent = `Blocked ${blocked} / ${tested} (${pct}%)`;
+    };
+
+    run();
+  </script>
+</body>
+</html>
