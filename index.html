@@ -63,6 +63,7 @@
   <h1>Ad‑block Quick Test</h1>
   <div id="controls">
     <label>Timeout (ms): <input id="timeoutInput" type="number" min="100" /></label>
+    <label>Custom host(s): <input id="customHostsInput" placeholder="https://example.com/ad.js" /></label>
     <button id="applyTimeout">Run Test</button>
   </div>
   <div id="results"></div>
@@ -79,16 +80,29 @@
       const t = parseInt(params.get('timeout'), 10);
       return !isNaN(t) && t > 0 ? t : 5000;
     })();
+    const CUSTOM_HOSTS = (() => {
+      const str = params.get('custom');
+      return str ? str.split(',').map(s => s.trim()).filter(Boolean) : [];
+    })();
 
     const resultsEl = document.getElementById('results');
     const timeoutInput = document.getElementById('timeoutInput');
+    const customHostsInput = document.getElementById('customHostsInput');
     const applyBtn = document.getElementById('applyTimeout');
     timeoutInput.value = TIMEOUT_MS;
+    const customParam = params.get('custom') || '';
+    customHostsInput.value = customParam;
     applyBtn.addEventListener('click', () => {
       const val = parseInt(timeoutInput.value, 10);
       const t = !isNaN(val) && val > 0 ? val : 5000;
       const url = new URL(location.href);
       url.searchParams.set('timeout', t);
+      const custom = customHostsInput.value.trim();
+      if (custom) {
+        url.searchParams.set('custom', custom);
+      } else {
+        url.searchParams.delete('custom');
+      }
       location.href = url.toString();
     });
 
@@ -110,6 +124,9 @@
     const loadCategories = async () => {
       const res = await fetch('categories.json');
       categories = await res.json();
+      if (CUSTOM_HOSTS.length) {
+        categories.push({ name: 'Custom Hosts', hosts: CUSTOM_HOSTS });
+      }
       categories.forEach(createCategorySection);
     };
 
