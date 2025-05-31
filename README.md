@@ -21,3 +21,11 @@ the JSON file has a `name` and an array of `hosts` URLs. You can add new
 categories or remove hosts by editing this file as long as the JSON structure is
 kept intact. The page will fetch `categories.json` at runtime, so any changes
 take effect the next time the page is loaded.
+
+You can also specify aditional hosts at runtime. Use the **Custom host(s)**
+field on the tester page or provide a comma‑separated list via the `custom`
+query parameter:
+
+```
+https://<username>.github.io/<repository>/?custom=https://example.com/ad.js
+```
