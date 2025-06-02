@@ -122,12 +122,23 @@
     };
 
     const loadCategories = async () => {
-      const res = await fetch('categories.json');
-      categories = await res.json();
-      if (CUSTOM_HOSTS.length) {
-        categories.push({ name: 'Custom Hosts', hosts: CUSTOM_HOSTS });
+      try {
+        const res = await fetch('categories.json');
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        categories = await res.json();
+        if (CUSTOM_HOSTS.length) {
+          categories.push({ name: 'Custom Hosts', hosts: CUSTOM_HOSTS });
+        }
+        categories.forEach(createCategorySection);
+      } catch (err) {
+        const div = document.createElement('div');
+        div.className = 'category';
+        div.style.color = 'var(--fail)';
+        div.textContent = 'Failed to load host list: ' + err.message;
+        resultsEl.appendChild(div);
       }
-      categories.forEach(createCategorySection);
     };
 
     let tested = 0;
