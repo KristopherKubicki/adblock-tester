@@ -122,12 +122,22 @@
     };
 
     const loadCategories = async () => {
-      const res = await fetch('categories.json');
-      categories = await res.json();
+      try {
+        const res = await fetch('categories.json');
+        if (!res.ok) throw new Error('Failed to fetch');
+        categories = await res.json();
+      } catch (err) {
+        const p = document.createElement('p');
+        p.textContent = 'Unable to load categories.';
+        p.style.color = 'var(--fail)';
+        resultsEl.appendChild(p);
+        return false;
+      }
       if (CUSTOM_HOSTS.length) {
         categories.push({ name: 'Custom Hosts', hosts: CUSTOM_HOSTS });
       }
       categories.forEach(createCategorySection);
+      return true;
     };
 
     let tested = 0;
@@ -164,7 +174,7 @@
       summary.textContent = `Blocked ${blocked} / ${tested} (${pct}%)`;
     };
 
-    loadCategories().then(run);
+    loadCategories().then((ok) => ok && run());
   </script>
 </body>
 </html>
