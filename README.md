@@ -29,3 +29,15 @@ query parameter:
 ```
 https://<username>.github.io/<repository>/?custom=https://example.com/ad.js
 ```
+
+## Updating Categories from EasyList
+
+Run the helper script to download host lists and regenerate `categories.json`:
+
+```bash
+python scripts/update_categories.py
+```
+
+The script fetches several EasyList sources, extracts the hostnames and writes
+them to `categories.json`. A network connection is required when running it.
+
