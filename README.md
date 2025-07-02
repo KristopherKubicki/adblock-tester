@@ -29,3 +29,12 @@ query parameter:
 ```
 https://<username>.github.io/<repository>/?custom=https://example.com/ad.js
 ```
+
+## Running Tests
+
+The repository includes a small Node-based test suite using the built-in
+`node:test` framework. Run it with:
+
+```
+npm test
+```
