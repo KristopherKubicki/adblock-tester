@@ -22,13 +22,14 @@ categories or remove hosts by editing this file as long as the JSON structure is
 kept intact. The page will fetch `categories.json` at runtime, so any changes
 take effect the next time the page is loaded.
 
-You can also specify aditional hosts at runtime. Use the **Custom host(s)**
+You can also specify additional hosts at runtime. Use the **Custom host(s)**
 field on the tester page or provide a comma‑separated list via the `custom`
 query parameter:
 
 ```
 https://<username>.github.io/<repository>/?custom=https://example.com/ad.js
 ```
+
 
 ## Updating Categories from EasyList
 
@@ -41,3 +42,12 @@ python scripts/update_categories.py
 The script fetches several EasyList sources, extracts the hostnames and writes
 them to `categories.json`. A network connection is required when running it.
 
+
+## Running Tests
+
+The repository includes a small Node-based test suite using the built-in
+`node:test` framework. Run it with:
+
+```
+npm test
+```
