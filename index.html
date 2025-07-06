@@ -52,6 +52,10 @@
       font-size: .85rem;
     }
     .host:first-of-type { border-top: 0; }
+    .host-log {
+      max-height: 6.5rem;
+      overflow: hidden;
+    }
     .status {
       font-weight: 600;
     }
@@ -59,7 +63,7 @@
     .status.fail { color: var(--fail); }
     #results {
       flex: 1 1 auto;
-      overflow-y: auto;
+      overflow: hidden;
     }
     #summary {
       text-align:center;
@@ -122,6 +126,7 @@
 
     let categories = [];
     const canvasMap = new Map();
+    const logMap = new Map();
 
     const extraTests = [
       {
@@ -187,24 +192,11 @@
       wrapper.appendChild(title);
       const canvas = document.createElement('canvas');
       wrapper.appendChild(canvas);
+      const log = document.createElement('div');
+      log.className = 'host-log';
+      wrapper.appendChild(log);
+      logMap.set(cat, log);
       canvasMap.set(cat, canvas);
-      cat.hosts.forEach((h) => {
-        const sanitized = sanitizeHost(h);
-        const row = document.createElement('div');
-        row.className = 'host';
-
-        const hostSpan = document.createElement('span');
-        hostSpan.textContent = h.replace(/https?:\/\//, '');
-        row.appendChild(hostSpan);
-
-        const statusSpan = document.createElement('span');
-        statusSpan.className = 'status';
-        statusSpan.setAttribute('data-host', sanitized);
-        statusSpan.textContent = '…';
-        row.appendChild(statusSpan);
-
-        wrapper.appendChild(row);
-      });
       resultsEl.appendChild(wrapper);
     };
 
@@ -311,15 +303,32 @@
 
       categories.forEach(updateChart);
 
+      const addRow = (cat, host, isBlocked) => {
+        const row = document.createElement('div');
+        row.className = 'host';
+        const hostSpan = document.createElement('span');
+        hostSpan.textContent = host.replace(/https?:\/\//, '');
+        const statusSpan = document.createElement('span');
+        statusSpan.className = 'status ' + (isBlocked ? 'ok' : 'fail');
+        statusSpan.textContent = isBlocked ? 'Blocked' : 'Allowed';
+        row.appendChild(hostSpan);
+        row.appendChild(statusSpan);
+        const log = logMap.get(cat);
+        if (log) {
+          log.appendChild(row);
+          while (log.childNodes.length > 3) {
+            log.removeChild(log.firstChild);
+          }
+        }
+      };
+
       const promises = allHosts.map((h) =>
         testHost(h).then((isBlocked) => {
           tested++;
           const cat = hostToCat.get(h);
           cat.results.tested++;
           if (isBlocked) { blocked++; cat.results.blocked++; }
-          const span = document.querySelector(`[data-host="${sanitizeHost(h)}"]`);
-          span.textContent = isBlocked ? 'Blocked' : 'Allowed';
-          span.classList.add(isBlocked ? 'ok' : 'fail');
+          addRow(cat, h, isBlocked);
           updateProgress();
           updateChart(cat);
         })
