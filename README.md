@@ -6,6 +6,8 @@
 
 This repository contains a lightweight ad‑block detection tester that can be hosted using [GitHub Pages](https://pages.github.com/).
 
+It aims to replace several popular ad‑block test pages that have gone offline or are no longer maintained.
+
 You can try the live tester at [kristopherkubicki.github.io/adblock-tester](https://kristopherkubicki.github.io/adblock-tester/).
 
 The GitHub Actions workflow in `.github/workflows/pages.yml` automatically publishes the contents of the repository to GitHub Pages whenever changes are pushed to the `main` branch.
