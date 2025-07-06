@@ -1,349 +1,415 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ad‑block Quick Test</title>
-  <style>
-    :root {
-      font-family: system-ui, sans-serif;
-      --bg: #111;
-      --card: #1e1e1e;
-      --ok: #48c774;
-      --fail: #ff3860;
-    }
-    body {
-      margin: 0;
-      padding: 1rem;
-      background: var(--bg);
-      color: #eee;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-      gap: 1rem;
-    }
-    nav {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-    }
-    nav a {
-      color: #eee;
-      text-decoration: none;
-      font-size: .9rem;
-    }
-    nav a:hover { text-decoration: underline; }
-    h1 { margin: 0 0 0.5rem; text-align:center; }
-    .category {
-      background: var(--card);
-      padding: 1rem 1.5rem;
-      border-radius: 0.75rem;
-      box-shadow: 0 0 8px rgba(0,0,0,.6);
-    }
-    .category h2 { margin: 0 0 0.5rem; font-size: 1rem; text-transform: uppercase; letter-spacing: .05em; }
-    .category canvas { display:block; margin:0 auto 0.5rem; width:90px; height:90px; }
-    .host {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.35rem 0;
-      border-top: 1px solid rgba(255,255,255,0.05);
-      font-size: .85rem;
-    }
-    .host:first-of-type { border-top: 0; }
-    .host-log {
-      max-height: 6.5rem;
-      overflow: hidden;
-    }
-    .status {
-      font-weight: 600;
-    }
-    .status.ok { color: var(--ok); }
-    .status.fail { color: var(--fail); }
-    #results {
-      flex: 1 1 auto;
-      overflow: hidden;
-    }
-    #summary {
-      text-align:center;
-      font-size:1.25rem;
-      font-weight:700;
-      flex-shrink: 0;
-    }
-    #scoreMeter { width:100%; height:1.5rem; }
-    #progressContainer {
-      width: 100%;
-      background: #333;
-      border-radius: 0.25rem;
-      overflow: hidden;
-      height: 1rem;
-      flex-shrink: 0;
-    }
-    #progressBar {
-      height: 100%;
-      width: 0;
-      background: var(--ok);
-      transition: width 0.3s;
-    }
-    #controls {
-      display: flex;
-      justify-content: center;
-      gap: 0.5rem;
-      font-size: .85rem;
-      flex-shrink: 0;
-    }
-    #controls input {
-      width: 6rem;
-    }
-  </style>
-</head>
-<body>
-  <nav>
-    <a href="index.html">Ad Test</a>
-    <a href="bots.html">Bots</a>
-    <a href="fingerprint.html">Fingerprint</a>
-  </nav>
-  <h1>Ad‑block Quick Test</h1>
-  <div id="controls">
-    <label>Timeout (ms): <input id="timeoutInput" type="number" min="100" /></label>
-    <label>Custom host(s): <input id="customHostsInput" placeholder="https://example.com/ad.js" /></label>
-    <button id="applyTimeout">Run Test</button>
-  </div>
-  <div id="results"></div>
-  <div id="summary"></div>
-  <meter id="scoreMeter" min="0" max="100" value="0"></meter>
-  <div id="progressContainer"><div id="progressBar"></div></div>
-  <script id="ad-bait">window.__adBaitLoaded = true;</script>
-  <div id="adBait" class="ad-banner" style="width:1px;height:1px;position:absolute;left:-9999px"></div>
-  <div id="extraResults"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ad‑block Quick Test</title>
+    <style>
+      :root {
+        font-family: system-ui, sans-serif;
+        --bg: #111;
+        --card: #1e1e1e;
+        --ok: #48c774;
+        --fail: #ff3860;
+      }
+      body {
+        margin: 0;
+        padding: 1rem;
+        background: var(--bg);
+        color: #eee;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+        gap: 1rem;
+      }
+      nav {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+      }
+      nav a {
+        color: #eee;
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      nav a:hover {
+        text-decoration: underline;
+      }
+      h1 {
+        margin: 0 0 0.5rem;
+        text-align: center;
+      }
+      .category {
+        background: var(--card);
+        padding: 1rem 1.5rem;
+        border-radius: 0.75rem;
+        box-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
+      }
+      .category h2 {
+        margin: 0 0 0.5rem;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .category canvas {
+        display: block;
+        margin: 0 auto 0.5rem;
+        width: 90px;
+        height: 90px;
+      }
+      .host {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.35rem 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        font-size: 0.85rem;
+      }
+      .host:first-of-type {
+        border-top: 0;
+      }
+      .host-log {
+        max-height: 6.5rem;
+        overflow: hidden;
+      }
+      .status {
+        font-weight: 600;
+      }
+      .status.ok {
+        color: var(--ok);
+      }
+      .status.fail {
+        color: var(--fail);
+      }
+      #results {
+        flex: 1 1 auto;
+        overflow: hidden;
+      }
+      #summary {
+        text-align: center;
+        font-size: 1.25rem;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      #scoreMeter {
+        width: 100%;
+        height: 1.5rem;
+      }
+      #progressContainer {
+        width: 100%;
+        background: #333;
+        border-radius: 0.25rem;
+        overflow: hidden;
+        height: 1rem;
+        flex-shrink: 0;
+      }
+      #progressBar {
+        height: 100%;
+        width: 0;
+        background: var(--ok);
+        transition: width 0.3s;
+      }
+      #controls {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+      }
+      #controls input {
+        width: 6rem;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <a href="index.html">Ad Test</a>
+      <a href="bots.html">Bots</a>
+      <a href="fingerprint.html">Fingerprint</a>
+    </nav>
+    <h1>Ad‑block Quick Test</h1>
+    <div id="controls">
+      <label
+        >Timeout (ms): <input id="timeoutInput" type="number" min="100"
+      /></label>
+      <label
+        >Custom host(s):
+        <input id="customHostsInput" placeholder="https://example.com/ad.js"
+      /></label>
+      <button id="applyTimeout">Run Test</button>
+    </div>
+    <div id="results"></div>
+    <div id="summary"></div>
+    <meter id="scoreMeter" min="0" max="100" value="0"></meter>
+    <div id="progressContainer"><div id="progressBar"></div></div>
+    <script id="ad-bait">
+      window.__adBaitLoaded = true;
+    </script>
+    <div
+      id="adBait"
+      class="ad-banner"
+      style="width: 1px; height: 1px; position: absolute; left: -9999px"
+    ></div>
+    <div id="extraResults"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <script>
-    /* List is intentionally short & focused so the page loads fast.
+    <script>
+      /* List is intentionally short & focused so the page loads fast.
        Edit `categories.json` to modify the hosts that get tested.   */
 
-    let categories = [];
-    const canvasMap = new Map();
-    const logMap = new Map();
+      let categories = [];
+      const canvasMap = new Map();
+      const logMap = new Map();
 
-    const extraTests = [
-      {
-        id: 'inline-script',
-        name: 'Inline Script Bait',
-        isBlocked: () => window.__adBaitLoaded !== true,
-      },
-      {
-        id: 'element-hiding',
-        name: 'Element Hiding',
-        isBlocked: () => {
-          const el = document.getElementById('adBait');
-          if (!el) return false;
-          const style = window.getComputedStyle ? getComputedStyle(el) : {};
-          return (
-            el.offsetHeight === 0 ||
-            style.display === 'none' ||
-            style.visibility === 'hidden'
-          );
+      const extraTests = [
+        {
+          id: "inline-script",
+          name: "Inline Script Bait",
+          isBlocked: () => window.__adBaitLoaded !== true,
         },
-      },
-    ];
+        {
+          id: "element-hiding",
+          name: "Element Hiding",
+          isBlocked: () => {
+            const el = document.getElementById("adBait");
+            if (!el) return false;
+            const style = window.getComputedStyle ? getComputedStyle(el) : {};
+            return (
+              el.offsetHeight === 0 ||
+              style.display === "none" ||
+              style.visibility === "hidden"
+            );
+          },
+        },
+      ];
 
-    const params = new URLSearchParams(location.search);
-    const TIMEOUT_MS = (() => {
-      const t = parseInt(params.get('timeout'), 10);
-      return !isNaN(t) && t > 0 ? t : 5000;
-    })();
-    const CUSTOM_HOSTS = (() => {
-      const str = params.get('custom');
-      return str ? str.split(',').map(s => s.trim()).filter(Boolean) : [];
-    })();
+      const params = new URLSearchParams(location.search);
+      const TIMEOUT_MS = (() => {
+        const t = parseInt(params.get("timeout"), 10);
+        return !isNaN(t) && t > 0 ? t : 5000;
+      })();
+      const CUSTOM_HOSTS = (() => {
+        const str = params.get("custom");
+        return str
+          ? str
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [];
+      })();
 
-    const resultsEl = document.getElementById('results');
-    const timeoutInput = document.getElementById('timeoutInput');
-    const customHostsInput = document.getElementById('customHostsInput');
-    const applyBtn = document.getElementById('applyTimeout');
-    const progressBar = document.getElementById('progressBar');
-    timeoutInput.value = TIMEOUT_MS;
-    const customParam = params.get('custom') || '';
-    customHostsInput.value = customParam;
-    applyBtn.addEventListener('click', () => {
-      const val = parseInt(timeoutInput.value, 10);
-      const t = !isNaN(val) && val > 0 ? val : 5000;
-      const url = new URL(location.href);
-      url.searchParams.set('timeout', t);
-      const custom = customHostsInput.value.trim();
-      if (custom) {
-        url.searchParams.set('custom', custom);
-      } else {
-        url.searchParams.delete('custom');
-      }
-      location.href = url.toString();
-    });
-
-    const sanitizeHost = (host) => host.replace(/"/g, '&quot;');
-
-    const createCategorySection = (cat) => {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'category';
-      const title = document.createElement('h2');
-      title.textContent = cat.name;
-      wrapper.appendChild(title);
-      const canvas = document.createElement('canvas');
-      wrapper.appendChild(canvas);
-      const log = document.createElement('div');
-      log.className = 'host-log';
-      wrapper.appendChild(log);
-      logMap.set(cat, log);
-      canvasMap.set(cat, canvas);
-      resultsEl.appendChild(wrapper);
-    };
-
-    const createExtraSection = () => {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'category';
-      const title = document.createElement('h2');
-      title.textContent = 'Additional Checks';
-      wrapper.appendChild(title);
-      extraTests.forEach((t) => {
-        const row = document.createElement('div');
-        row.className = 'host';
-        const label = document.createElement('span');
-        label.textContent = t.name;
-        row.appendChild(label);
-        const status = document.createElement('span');
-        status.className = 'status';
-        status.setAttribute('data-extra', t.id);
-        status.textContent = '…';
-        row.appendChild(status);
-        wrapper.appendChild(row);
-      });
-      const extraResults = document.getElementById('extraResults');
-      extraResults.appendChild(wrapper);
-    };
-
-    const loadCategories = async () => {
-      const res = await fetch('categories.json');
-      categories = await res.json();
-      if (CUSTOM_HOSTS.length) {
-        categories.push({ name: 'Custom Hosts', hosts: CUSTOM_HOSTS });
-      }
-      categories.forEach(createCategorySection);
-      createExtraSection();
-    };
-
-    let tested = 0;
-    let blocked = 0;
-
-    // Test helper – use Image so we can rely on onerror/onload.
-    const testHost = (url) => new Promise((resolve) => {
-      const img = new Image();
-      const timer = setTimeout(() => {
-        img.src = '';
-        resolve(true); // treat as blocked on timeout
-      }, TIMEOUT_MS);
-
-      img.onerror = () => { clearTimeout(timer); resolve(true); };
-      img.onload  = () => { clearTimeout(timer); resolve(false); };
-      // Tweak: add cache‑buster so the request isn’t cached between runs
-      img.src = url + (url.includes('?') ? '&' : '?') + 'cb=' + Date.now();
-    });
-
-    const runExtraTests = () => {
-      extraTests.forEach((t) => {
-        const blocked = t.isBlocked();
-        const span = document.querySelector(`[data-extra="${t.id}"]`);
-        if (span) {
-          span.textContent = blocked ? 'Blocked' : 'Allowed';
-          span.classList.add(blocked ? 'ok' : 'fail');
+      const resultsEl = document.getElementById("results");
+      const timeoutInput = document.getElementById("timeoutInput");
+      const customHostsInput = document.getElementById("customHostsInput");
+      const applyBtn = document.getElementById("applyTimeout");
+      const progressBar = document.getElementById("progressBar");
+      timeoutInput.value = TIMEOUT_MS;
+      const customParam = params.get("custom") || "";
+      customHostsInput.value = customParam;
+      applyBtn.addEventListener("click", () => {
+        const val = parseInt(timeoutInput.value, 10);
+        const t = !isNaN(val) && val > 0 ? val : 5000;
+        const url = new URL(location.href);
+        url.searchParams.set("timeout", t);
+        const custom = customHostsInput.value.trim();
+        if (custom) {
+          url.searchParams.set("custom", custom);
+        } else {
+          url.searchParams.delete("custom");
         }
+        location.href = url.toString();
       });
-    };
 
-    const run = async () => {
-      progressBar.style.width = '0';
-      tested = 0;
-      blocked = 0;
-      categories.forEach(c => { c.results = { tested: 0, blocked: 0 }; });
+      const sanitizeHost = (host) => host.replace(/"/g, "&quot;");
 
-      const hostToCat = new Map();
-      categories.forEach((c) => c.hosts.forEach((h) => hostToCat.set(h, c)));
-
-      const allHosts = categories.flatMap(c => c.hosts);
-      const total = allHosts.length;
-      const updateProgress = () => {
-        const pct = Math.round((tested / total) * 100);
-        progressBar.style.width = pct + '%';
+      const createCategorySection = (cat) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "category";
+        const title = document.createElement("h2");
+        title.textContent = cat.name;
+        wrapper.appendChild(title);
+        const canvas = document.createElement("canvas");
+        wrapper.appendChild(canvas);
+        const log = document.createElement("div");
+        log.className = "host-log";
+        wrapper.appendChild(log);
+        logMap.set(cat, log);
+        canvasMap.set(cat, canvas);
+        resultsEl.appendChild(wrapper);
       };
 
-      const updateChart = (cat) => {
-        const canvas = canvasMap.get(cat);
-        if (!canvas) return;
-        if (!cat.chart && typeof Chart !== 'undefined' && canvas.getContext) {
-          cat.chart = new Chart(canvas.getContext('2d'), {
-            type: 'pie',
-            data: {
-              labels: ['Blocked', 'Allowed', 'Testing'],
-              datasets: [{
-                data: [0, 0, cat.hosts.length],
-                backgroundColor: ['var(--ok)', 'var(--fail)', '#666'],
-              }],
-            },
-            options: { animation: false, plugins: { legend: { display: false } } },
-          });
-        }
-        if (cat.chart) {
-          const { tested: t, blocked: b } = cat.results;
-          const remaining = cat.hosts.length - t;
-          cat.chart.data.datasets[0].data = [b, t - b, remaining];
-          cat.chart.update();
-        }
+      const createExtraSection = () => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "category";
+        const title = document.createElement("h2");
+        title.textContent = "Additional Checks";
+        wrapper.appendChild(title);
+        extraTests.forEach((t) => {
+          const row = document.createElement("div");
+          row.className = "host";
+          const label = document.createElement("span");
+          label.textContent = t.name;
+          row.appendChild(label);
+          const status = document.createElement("span");
+          status.className = "status";
+          status.setAttribute("data-extra", t.id);
+          status.textContent = "…";
+          row.appendChild(status);
+          wrapper.appendChild(row);
+        });
+        const extraResults = document.getElementById("extraResults");
+        extraResults.appendChild(wrapper);
       };
 
-      categories.forEach(updateChart);
+      const loadCategories = async () => {
+        const res = await fetch("categories.json");
+        categories = await res.json();
+        if (CUSTOM_HOSTS.length) {
+          categories.push({ name: "Custom Hosts", hosts: CUSTOM_HOSTS });
+        }
+        categories.forEach(createCategorySection);
+        createExtraSection();
+      };
 
-      const addRow = (cat, host, isBlocked) => {
-        const row = document.createElement('div');
-        row.className = 'host';
-        const hostSpan = document.createElement('span');
-        hostSpan.textContent = host.replace(/https?:\/\//, '');
-        const statusSpan = document.createElement('span');
-        statusSpan.className = 'status ' + (isBlocked ? 'ok' : 'fail');
-        statusSpan.textContent = isBlocked ? 'Blocked' : 'Allowed';
-        row.appendChild(hostSpan);
-        row.appendChild(statusSpan);
-        const log = logMap.get(cat);
-        if (log) {
-          log.appendChild(row);
-          while (log.childNodes.length > 3) {
-            log.removeChild(log.firstChild);
+      let tested = 0;
+      let blocked = 0;
+
+      // Test helper – use Image so we can rely on onerror/onload.
+      const testHost = (url) =>
+        new Promise((resolve) => {
+          const img = new Image();
+          const timer = setTimeout(() => {
+            img.src = "";
+            resolve(true); // treat as blocked on timeout
+          }, TIMEOUT_MS);
+
+          img.onerror = () => {
+            clearTimeout(timer);
+            resolve(true);
+          };
+          img.onload = () => {
+            clearTimeout(timer);
+            resolve(false);
+          };
+          // Tweak: add cache‑buster so the request isn’t cached between runs
+          img.src = url + (url.includes("?") ? "&" : "?") + "cb=" + Date.now();
+        });
+
+      const runExtraTests = () => {
+        extraTests.forEach((t) => {
+          const blocked = t.isBlocked();
+          const span = document.querySelector(`[data-extra="${t.id}"]`);
+          if (span) {
+            span.textContent = blocked ? "Blocked" : "Allowed";
+            span.classList.add(blocked ? "ok" : "fail");
           }
-        }
+        });
       };
 
-      const promises = allHosts.map((h) =>
-        testHost(h).then((isBlocked) => {
-          tested++;
-          const cat = hostToCat.get(h);
-          cat.results.tested++;
-          if (isBlocked) { blocked++; cat.results.blocked++; }
-          addRow(cat, h, isBlocked);
-          updateProgress();
-          updateChart(cat);
-        })
-      );
-      await Promise.all(promises);
-      const pct = Math.round((blocked / tested) * 100);
-      const summary = document.getElementById('summary');
-      const meter = document.getElementById('scoreMeter');
-      if (meter) meter.value = pct;
-      summary.textContent = `Blocked ${blocked} / ${tested} (${pct}%)`;
-      categories.forEach(updateChart);
-      runExtraTests();
-    };
+      const run = async () => {
+        progressBar.style.width = "0";
+        tested = 0;
+        blocked = 0;
+        categories.forEach((c) => {
+          c.results = { tested: 0, blocked: 0 };
+        });
 
-    loadCategories().then(run);
-  </script>
-</body>
+        const hostToCat = new Map();
+        categories.forEach((c) => c.hosts.forEach((h) => hostToCat.set(h, c)));
+
+        const allHosts = categories.flatMap((c) => c.hosts);
+        const total = allHosts.length;
+        const updateProgress = () => {
+          const pct = Math.round((tested / total) * 100);
+          progressBar.style.width = pct + "%";
+        };
+
+        const updateChart = (cat) => {
+          const canvas = canvasMap.get(cat);
+          if (!canvas) return;
+          if (!cat.chart && typeof Chart !== "undefined" && canvas.getContext) {
+            cat.chart = new Chart(canvas.getContext("2d"), {
+              type: "pie",
+              data: {
+                labels: ["Blocked", "Allowed", "Testing"],
+                datasets: [
+                  {
+                    data: [0, 0, cat.hosts.length],
+                    backgroundColor: ["var(--ok)", "var(--fail)", "#666"],
+                  },
+                ],
+              },
+              options: {
+                animation: false,
+                plugins: { legend: { display: false } },
+              },
+            });
+          }
+          if (cat.chart) {
+            const { tested: t, blocked: b } = cat.results;
+            const remaining = cat.hosts.length - t;
+            cat.chart.data.datasets[0].data = [b, t - b, remaining];
+            cat.chart.update();
+          }
+        };
+
+        categories.forEach(updateChart);
+
+        const addRow = (cat, host, isBlocked) => {
+          const row = document.createElement("div");
+          row.className = "host";
+          const hostSpan = document.createElement("span");
+          hostSpan.textContent = host.replace(/https?:\/\//, "");
+          const statusSpan = document.createElement("span");
+          statusSpan.className = "status " + (isBlocked ? "ok" : "fail");
+          statusSpan.textContent = isBlocked ? "Blocked" : "Allowed";
+          row.appendChild(hostSpan);
+          row.appendChild(statusSpan);
+          const log = logMap.get(cat);
+          if (log) {
+            log.appendChild(row);
+            while (log.childNodes.length > 3) {
+              log.removeChild(log.firstChild);
+            }
+          }
+        };
+
+        const promises = allHosts.map((h) =>
+          testHost(h).then((isBlocked) => {
+            tested++;
+            const cat = hostToCat.get(h);
+            cat.results.tested++;
+            if (isBlocked) {
+              blocked++;
+              cat.results.blocked++;
+            }
+            addRow(cat, h, isBlocked);
+            updateProgress();
+            updateChart(cat);
+          }),
+        );
+        await Promise.all(promises);
+        const pct = Math.round((blocked / tested) * 100);
+        const summary = document.getElementById("summary");
+        const meter = document.getElementById("scoreMeter");
+        if (meter) meter.value = pct;
+        summary.textContent = `Blocked ${blocked} / ${tested} (${pct}%)`;
+        categories.forEach(updateChart);
+        runExtraTests();
+      };
+
+      loadCategories().then(run);
+    </script>
+    <footer
+      id="footer"
+      style="text-align: center; font-size: 0.75rem; margin-top: auto"
+    ></footer>
+    <script src="build_info.js"></script>
+    <script>
+      document.getElementById("footer").textContent =
+        `v${BUILD_INFO.version} — built ${BUILD_INFO.buildDate}`;
+    </script>
+  </body>
 </html>
