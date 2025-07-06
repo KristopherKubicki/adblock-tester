@@ -7,7 +7,11 @@
     "test": "node --test"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kristopherkubicki/adblock-tester.git"
+  },
+  "author": "Kristopher Kubicki",
+  "license": "MIT",
   "type": "commonjs"
 }
