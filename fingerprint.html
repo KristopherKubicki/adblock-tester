@@ -33,10 +33,21 @@
     }
     nav a:hover { text-decoration: underline; }
     h1 { margin: 0 0 0.5rem; text-align:center; }
-    #fp { flex: 1 1 auto; overflow: hidden; }
-    dl { margin: 0; }
-    dt { font-weight: 600; }
-    dd { margin: 0 0 0.5rem 0; word-break: break-all; }
+    #fp {
+      flex: 1 1 auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .8rem;
+      word-break: break-all;
+    }
+    th, td { padding: 0.2rem 0.5rem; text-align: left; }
+    th { font-weight: 600; }
   </style>
 </head>
 <body>
@@ -55,20 +66,38 @@
       'Hardware Concurrency': navigator.hardwareConcurrency,
       'Device Memory': navigator.deviceMemory,
       'Screen': `${screen.width} x ${screen.height}`,
+      'Available Screen': `${screen.availWidth} x ${screen.availHeight}`,
       'Color Depth': screen.colorDepth,
+      'Pixel Depth': screen.pixelDepth,
       'Timezone Offset': new Date().getTimezoneOffset(),
+      'Connection': navigator.connection
+        ? `${navigator.connection.effectiveType} (${navigator.connection.downlink}Mbps)`
+        : 'unknown',
+      'Max Touch Points': navigator.maxTouchPoints,
+      'Cookie Enabled': navigator.cookieEnabled,
+      'Do Not Track': navigator.doNotTrack,
+      'WebDriver': navigator.webdriver,
+      'Local Storage': (function () {
+        try { localStorage.setItem('t', '1'); localStorage.removeItem('t'); return 'yes'; } catch (e) { return 'no'; }
+      })(),
+      'Session Storage': (function () {
+        try { sessionStorage.setItem('t', '1'); sessionStorage.removeItem('t'); return 'yes'; } catch (e) { return 'no'; }
+      })(),
+      'Plugins': navigator.plugins ? Array.from(navigator.plugins).map(p => p.name).join(', ') : '',
     };
     const container = document.getElementById('fp');
-    const dl = document.createElement('dl');
+    const table = document.createElement('table');
     for (const [k, v] of Object.entries(data)) {
-      const dt = document.createElement('dt');
-      dt.textContent = k;
-      const dd = document.createElement('dd');
-      dd.textContent = String(v);
-      dl.appendChild(dt);
-      dl.appendChild(dd);
+      const tr = document.createElement('tr');
+      const th = document.createElement('th');
+      th.textContent = k;
+      const td = document.createElement('td');
+      td.textContent = String(v);
+      tr.appendChild(th);
+      tr.appendChild(td);
+      table.appendChild(tr);
     }
-    container.appendChild(dl);
+    container.appendChild(table);
   </script>
 </body>
 </html>
