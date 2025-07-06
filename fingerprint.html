@@ -75,6 +75,54 @@
     <h1>Browser Fingerprint</h1>
     <div id="fp"></div>
     <script>
+      function hash(str) {
+        let out = 0;
+        for (let i = 0; i < str.length; i++) {
+          out = (out << 5) - out + str.charCodeAt(i);
+          out |= 0;
+        }
+        return out.toString();
+      }
+
+      function getCanvasHash() {
+        try {
+          const c = document.createElement("canvas");
+          c.width = 200;
+          c.height = 50;
+          const ctx = c.getContext("2d");
+          ctx.textBaseline = "top";
+          ctx.font = "14px Arial";
+          ctx.fillStyle = "#f60";
+          ctx.fillRect(0, 0, 100, 30);
+          ctx.fillStyle = "#069";
+          ctx.fillText("fingerprint", 2, 15);
+          return hash(c.toDataURL());
+        } catch {
+          return "n/a";
+        }
+      }
+
+      function getWebGLInfo() {
+        try {
+          const c = document.createElement("canvas");
+          const gl =
+            c.getContext("webgl") || c.getContext("experimental-webgl");
+          if (!gl) return { vendor: "n/a", renderer: "n/a" };
+          const dbg = gl.getExtension("WEBGL_debug_renderer_info");
+          const vendor = dbg
+            ? gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL)
+            : gl.getParameter(gl.VENDOR);
+          const renderer = dbg
+            ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)
+            : gl.getParameter(gl.RENDERER);
+          return { vendor, renderer };
+        } catch {
+          return { vendor: "n/a", renderer: "n/a" };
+        }
+      }
+
+      const { vendor: webglVendor, renderer: webglRenderer } = getWebGLInfo();
+
       const data = {
         "User Agent": navigator.userAgent,
         Languages: navigator.languages ? navigator.languages.join(", ") : "",
@@ -84,6 +132,17 @@
         Screen: `${screen.width} x ${screen.height}`,
         "Color Depth": screen.colorDepth,
         "Timezone Offset": new Date().getTimezoneOffset(),
+        "Do Not Track": navigator.doNotTrack || window.doNotTrack || "",
+        "Cookies Enabled": navigator.cookieEnabled,
+        "Local Storage": !!window.localStorage,
+        "Session Storage": !!window.sessionStorage,
+        "Touch Points": navigator.maxTouchPoints,
+        Plugins: Array.from(navigator.plugins || [])
+          .map((p) => p.name)
+          .join(", "),
+        "Canvas Hash": getCanvasHash(),
+        "WebGL Vendor": webglVendor,
+        "WebGL Renderer": webglRenderer,
       };
       const container = document.getElementById("fp");
       const dl = document.createElement("dl");
