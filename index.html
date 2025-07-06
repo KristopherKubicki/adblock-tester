@@ -23,6 +23,17 @@
       overflow: hidden;
       gap: 1rem;
     }
+    nav {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+    nav a {
+      color: #eee;
+      text-decoration: none;
+      font-size: .9rem;
+    }
+    nav a:hover { text-decoration: underline; }
     h1 { margin: 0 0 0.5rem; text-align:center; }
     .category {
       background: var(--card);
@@ -84,6 +95,11 @@
   </style>
 </head>
 <body>
+  <nav>
+    <a href="index.html">Ad Test</a>
+    <a href="bots.html">Bots</a>
+    <a href="fingerprint.html">Fingerprint</a>
+  </nav>
   <h1>Ad‑block Quick Test</h1>
   <div id="controls">
     <label>Timeout (ms): <input id="timeoutInput" type="number" min="100" /></label>

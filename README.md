@@ -9,6 +9,7 @@ This repository contains a lightweight ad‑block detection tester that can be h
 ## [Try the Live Tester](https://kristopherkubicki.github.io/adblock-tester/)
 
 It aims to replace several popular ad‑block test pages that have gone offline or are no longer maintained.
+The tester includes pages for ad blocking, bot detection, and a simple browser fingerprint viewer.
 
 The GitHub Actions workflow in `.github/workflows/pages.yml` runs the full test suite and publishes the site to GitHub Pages whenever changes are pushed to the `main` branch.
 
