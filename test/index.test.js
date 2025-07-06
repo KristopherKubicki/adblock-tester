@@ -7,7 +7,7 @@ const { test } = require("node:test");
 const root = __dirname ? path.resolve(__dirname, "..") : "..";
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const script = /<script>([\s\S]*?)<\/script>/.exec(html)[1];
-const cleaned = script.replace(/loadCategories\(\)\.then\(run\);/, "");
+const cleaned = script.replace(/loadCategories\(\)[\s\S]*?\/\/INIT/, "");
 const wrapper = `${cleaned}\nreturn { loadCategories, getCategories: () => categories, sanitizeHost, createCategorySection, createExtraSection, runExtraTests, run, testHost, TIMEOUT_MS };\n//# sourceURL=index.inline.js`;
 
 const dummy = () => ({
@@ -59,6 +59,12 @@ function setup(query, data, hooks = {}) {
     setTimeout: hooks.setTimeout || setTimeout,
     clearTimeout: hooks.clearTimeout || clearTimeout,
     console,
+    localStorage: {
+      storage: {},
+      getItem(k) { return this.storage[k]; },
+      setItem(k, v) { this.storage[k] = v; },
+      removeItem(k) { delete this.storage[k]; },
+    },
   };
   const fn = new Function(
     "window",
@@ -70,6 +76,7 @@ function setup(query, data, hooks = {}) {
     "setTimeout",
     "clearTimeout",
     "console",
+    "localStorage",
     wrapper,
   );
   return fn(
@@ -82,6 +89,7 @@ function setup(query, data, hooks = {}) {
     env.setTimeout,
     env.clearTimeout,
     env.console,
+    env.localStorage,
   );
 }
 
@@ -187,6 +195,12 @@ function setupSpy(query, data, hooks = {}) {
     setTimeout: hooks.setTimeout || setTimeout,
     clearTimeout: hooks.clearTimeout || clearTimeout,
     console,
+    localStorage: {
+      storage: {},
+      getItem(k) { return this.storage[k]; },
+      setItem(k, v) { this.storage[k] = v; },
+      removeItem(k) { delete this.storage[k]; },
+    },
   };
   const customWrapper = `${cleaned}\nreturn { loadCategories, getCategories: () => categories, sanitizeHost, createCategorySection, createExtraSection, runExtraTests, run, testHost, TIMEOUT_MS };\n//# sourceURL=index.inline.js`;
   const fn = new Function(
@@ -199,6 +213,7 @@ function setupSpy(query, data, hooks = {}) {
     "setTimeout",
     "clearTimeout",
     "console",
+    "localStorage",
     customWrapper,
   );
   const res = fn(
@@ -211,6 +226,7 @@ function setupSpy(query, data, hooks = {}) {
     env.setTimeout,
     env.clearTimeout,
     env.console,
+    env.localStorage,
   );
   return { ...res, spans, divs, summaryEl, innerHTMLUsed: () => innerHTMLUsed, env };
 }
