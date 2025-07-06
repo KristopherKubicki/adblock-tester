@@ -7,7 +7,11 @@
     "update-categories": "python scripts/update_categories.py"
   },
   "keywords": [],
-  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kristopherkubicki/adblock-tester.git"
+  },
+  "author": "Kristopher Kubicki",
   "license": "MIT",
   "type": "commonjs"
 }
