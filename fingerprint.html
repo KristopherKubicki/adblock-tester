@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Browser Fingerprint</title>
+  <style>
+    :root {
+      font-family: system-ui, sans-serif;
+      --bg: #111;
+      --card: #1e1e1e;
+    }
+    body {
+      margin: 0;
+      padding: 1rem;
+      background: var(--bg);
+      color: #eee;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      gap: 1rem;
+    }
+    nav {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+    nav a {
+      color: #eee;
+      text-decoration: none;
+      font-size: .9rem;
+    }
+    nav a:hover { text-decoration: underline; }
+    h1 { margin: 0 0 0.5rem; text-align:center; }
+    #fp { flex: 1 1 auto; overflow-y: auto; }
+    dl { margin: 0; }
+    dt { font-weight: 600; }
+    dd { margin: 0 0 0.5rem 0; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Ad Test</a>
+    <a href="bots.html">Bots</a>
+    <a href="fingerprint.html">Fingerprint</a>
+  </nav>
+  <h1>Browser Fingerprint</h1>
+  <div id="fp"></div>
+  <script>
+    const data = {
+      'User Agent': navigator.userAgent,
+      'Languages': navigator.languages ? navigator.languages.join(', ') : '',
+      'Platform': navigator.platform,
+      'Hardware Concurrency': navigator.hardwareConcurrency,
+      'Device Memory': navigator.deviceMemory,
+      'Screen': `${screen.width} x ${screen.height}`,
+      'Color Depth': screen.colorDepth,
+      'Timezone Offset': new Date().getTimezoneOffset(),
+    };
+    const container = document.getElementById('fp');
+    const dl = document.createElement('dl');
+    for (const [k, v] of Object.entries(data)) {
+      const dt = document.createElement('dt');
+      dt.textContent = k;
+      const dd = document.createElement('dd');
+      dd.textContent = String(v);
+      dl.appendChild(dt);
+      dl.appendChild(dd);
+    }
+    container.appendChild(dl);
+  </script>
+</body>
+</html>
