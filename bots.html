@@ -134,6 +134,23 @@
           },
         },
         {
+          name: "Software WebGL",
+          fn: () => {
+            try {
+              const c = document.createElement("canvas");
+              const gl = c.getContext("webgl") || c.getContext("experimental-webgl");
+              if (!gl) return false;
+              const dbg = gl.getExtension("WEBGL_debug_renderer_info");
+              const renderer = dbg
+                ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)
+                : gl.getParameter(gl.RENDERER);
+              return /swiftshader|llvmpipe/i.test(renderer);
+            } catch (e) {
+              return false;
+            }
+          },
+        },
+        {
           name: "Touch on desktop",
           fn: () =>
             "ontouchstart" in window &&

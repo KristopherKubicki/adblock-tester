@@ -121,6 +121,10 @@
         }
       }
 
+      function isSoftwareWebGL(renderer) {
+        return /swiftshader|llvmpipe/i.test(renderer || "");
+      }
+
       const { vendor: webglVendor, renderer: webglRenderer } = getWebGLInfo();
 
       const data = {
@@ -143,6 +147,7 @@
         "Canvas Hash": getCanvasHash(),
         "WebGL Vendor": webglVendor,
         "WebGL Renderer": webglRenderer,
+        "Software WebGL": isSoftwareWebGL(webglRenderer),
       };
       const container = document.getElementById("fp");
       const dl = document.createElement("dl");
