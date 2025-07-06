@@ -54,3 +54,24 @@ def test_update_categories(tmp_path, monkeypatch):
     assert data == [
         {"name": "Demo", "hosts": ["https://bad.com", "https://tracker.net"]}
     ]
+
+
+def test_update_categories_ignore_failures(tmp_path, monkeypatch):
+    def fail_get(url, timeout=30):
+        raise uc.requests.RequestException("boom")
+
+    monkeypatch.setattr(uc, "CATEGORY_SOURCES", {"Demo": ["http://example.com"]})
+    monkeypatch.setattr(uc.requests, "get", fail_get)
+
+    out = tmp_path / "out.json"
+    uc.update_categories(out, max_retries=2, ignore_failures=True)
+    assert json.loads(out.read_text()) == [{"name": "Demo", "hosts": []}]
+
+
+def test_parse_lines_strip_paths():
+    lines = ["||example.com/ad.js^", "||example.com/foo/bar", "example.net/path"]
+    assert uc._parse_lines(lines) == [
+        "https://example.com",
+        "https://example.com",
+        "https://example.net",
+    ]
