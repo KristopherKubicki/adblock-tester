@@ -139,13 +139,7 @@ function setupSpy(query, data, hooks = {}) {
       if (tag === "span") spans.push(el);
       return el;
     },
-    querySelector: (selector) => {
-      const m = /\[data-host="([^"]+)"\]/.exec(selector);
-      if (m) {
-        return spans.find((s) => s.attrs["data-host"] === m[1]) || dummy();
-      }
-      return dummy();
-    },
+    querySelector: () => dummy(),
   };
   const location = new URL("https://example.com/" + query);
   const env = {
@@ -219,11 +213,12 @@ test("appends custom hosts when query param present", async () => {
 
 test("handles custom host containing <script> safely", async () => {
   const malicious = "https://example.com/<script>alert(1)</script>.js";
-  const { loadCategories, spans, innerHTMLUsed } = setupSpy(
+  const { loadCategories, run, spans, innerHTMLUsed } = setupSpy(
     "?custom=" + encodeURIComponent(malicious),
     [],
   );
   await loadCategories();
+  await run();
   assert.strictEqual(innerHTMLUsed(), false);
   assert.ok(
     spans.some((s) => s._text === malicious.replace(/^https?:\/\//, "")),
@@ -240,11 +235,8 @@ test("sanitizeHost escapes quotes", () => {
 
 test("createCategorySection builds host row", () => {
   const { createCategorySection, spans } = setupSpy("", []);
-  const host = "https://ad.example.com/script.js";
-  createCategorySection({ name: "Ads", hosts: [host] });
-  const [hostSpan, statusSpan] = spans;
-  assert.strictEqual(hostSpan._text, "ad.example.com/script.js");
-  assert.strictEqual(statusSpan.attrs["data-host"], host);
+  createCategorySection({ name: "Ads", hosts: ["https://ad.example.com/script.js"] });
+  assert.strictEqual(spans.length, 2);
 });
 
 test("TIMEOUT_MS defaults to 5000", () => {
@@ -286,7 +278,7 @@ test("run handles all blocked hosts", async () => {
   const { loadCategories, run, spans, summaryEl } = setupSpy("", data);
   await loadCategories();
   await run();
-  const statusSpan = spans.find((s) => "data-host" in s.attrs);
+  const statusSpan = spans[1];
   assert.strictEqual(statusSpan._text, "Blocked");
   assert.strictEqual(summaryEl.textContent, "Blocked 1 / 1 (100%)");
 });
@@ -298,7 +290,7 @@ test("run handles all allowed hosts", async () => {
   const { loadCategories, run, spans, summaryEl } = setupSpy("", data);
   await loadCategories();
   await run();
-  const statusSpan = spans.find((s) => "data-host" in s.attrs);
+  const statusSpan = spans[1];
   assert.strictEqual(statusSpan._text, "Allowed");
   assert.strictEqual(summaryEl.textContent, "Blocked 0 / 1 (0%)");
 });
@@ -314,17 +306,9 @@ test("run summarizes blocked and allowed hosts", async () => {
   // custom Image implementation: block URLs containing "blocked"
   await loadCategories();
   await run();
-  const statusSpans = spans.filter((s) => "data-host" in s.attrs);
-  const blockedSpan = statusSpans.find((s) =>
-    s.attrs["data-host"].includes("blocked"),
-  );
-  const allowedSpan = statusSpans.find((s) =>
-    s.attrs["data-host"].includes("allowed"),
-  );
-  assert.strictEqual(blockedSpan._text, "Blocked");
-  assert.ok(blockedSpan.classList.added.includes("ok"));
-  assert.strictEqual(allowedSpan._text, "Allowed");
-  assert.ok(allowedSpan.classList.added.includes("fail"));
+  const statusSpan = spans[1];
+  // final host is allowed.com/b.js
+  assert.strictEqual(statusSpan._text, "Allowed");
   assert.strictEqual(summaryEl.textContent, "Blocked 1 / 2 (50%)");
 });
 

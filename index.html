@@ -29,6 +29,7 @@
       padding: 1rem 1.5rem;
       border-radius: 0.75rem;
       box-shadow: 0 0 8px rgba(0,0,0,.6);
+      width: 200px;
     }
     .category h2 { margin: 0 0 0.5rem; font-size: 1rem; text-transform: uppercase; letter-spacing: .05em; }
     .category canvas { display:block; margin:0 auto 0.5rem; width:90px; height:90px; }
@@ -37,10 +38,8 @@
       align-items: center;
       justify-content: space-between;
       padding: 0.35rem 0;
-      border-top: 1px solid rgba(255,255,255,0.05);
       font-size: .85rem;
     }
-    .host:first-of-type { border-top: 0; }
     .status {
       font-weight: 600;
     }
@@ -48,7 +47,12 @@
     .status.fail { color: var(--fail); }
     #results {
       flex: 1 1 auto;
-      overflow-y: auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      overflow: hidden;
+      justify-content: center;
+      align-items: flex-start;
     }
     #summary {
       text-align:center;
@@ -103,6 +107,7 @@
 
     let categories = [];
     const canvasMap = new Map();
+    const rowMap = new Map();
 
     const params = new URLSearchParams(location.search);
     const TIMEOUT_MS = (() => {
@@ -147,23 +152,18 @@
       const canvas = document.createElement('canvas');
       wrapper.appendChild(canvas);
       canvasMap.set(cat, canvas);
-      cat.hosts.forEach((h) => {
-        const sanitized = sanitizeHost(h);
-        const row = document.createElement('div');
-        row.className = 'host';
+      const row = document.createElement('div');
+      row.className = 'host';
 
-        const hostSpan = document.createElement('span');
-        hostSpan.textContent = h.replace(/https?:\/\//, '');
-        row.appendChild(hostSpan);
+      const hostSpan = document.createElement('span');
+      row.appendChild(hostSpan);
 
-        const statusSpan = document.createElement('span');
-        statusSpan.className = 'status';
-        statusSpan.setAttribute('data-host', sanitized);
-        statusSpan.textContent = '…';
-        row.appendChild(statusSpan);
+      const statusSpan = document.createElement('span');
+      statusSpan.className = 'status';
+      row.appendChild(statusSpan);
 
-        wrapper.appendChild(row);
-      });
+      rowMap.set(cat, { hostSpan, statusSpan });
+      wrapper.appendChild(row);
       resultsEl.appendChild(wrapper);
     };
 
@@ -199,11 +199,7 @@
       blocked = 0;
       categories.forEach(c => { c.results = { tested: 0, blocked: 0 }; });
 
-      const hostToCat = new Map();
-      categories.forEach((c) => c.hosts.forEach((h) => hostToCat.set(h, c)));
-
-      const allHosts = categories.flatMap(c => c.hosts);
-      const total = allHosts.length;
+      const total = categories.reduce((n, c) => n + c.hosts.length, 0);
       const updateProgress = () => {
         const pct = Math.round((tested / total) * 100);
         progressBar.style.width = pct + '%';
@@ -235,20 +231,24 @@
 
       categories.forEach(updateChart);
 
-      const promises = allHosts.map((h) =>
-        testHost(h).then((isBlocked) => {
+      const runCategory = async (cat) => {
+        const row = rowMap.get(cat);
+        if (!row) return;
+        for (const h of cat.hosts) {
+          row.hostSpan.textContent = h.replace(/^https?:\/\//, '');
+          row.statusSpan.textContent = '…';
+          const isBlocked = await testHost(h);
           tested++;
-          const cat = hostToCat.get(h);
           cat.results.tested++;
           if (isBlocked) { blocked++; cat.results.blocked++; }
-          const span = document.querySelector(`[data-host="${sanitizeHost(h)}"]`);
-          span.textContent = isBlocked ? 'Blocked' : 'Allowed';
-          span.classList.add(isBlocked ? 'ok' : 'fail');
+          row.statusSpan.textContent = isBlocked ? 'Blocked' : 'Allowed';
+          row.statusSpan.className = 'status ' + (isBlocked ? 'ok' : 'fail');
           updateProgress();
           updateChart(cat);
-        })
-      );
-      await Promise.all(promises);
+        }
+      };
+
+      await Promise.all(categories.map(runCategory));
       const pct = Math.round((blocked / tested) * 100);
       const summary = document.getElementById('summary');
       const meter = document.getElementById('scoreMeter');
