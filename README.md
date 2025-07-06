@@ -51,3 +51,7 @@ The repository includes a small Node-based test suite using the built-in
 ```
 npm test
 ```
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
