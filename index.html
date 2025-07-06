@@ -48,6 +48,19 @@
       font-size:1.25rem;
       font-weight:700;
     }
+    #progressContainer {
+      width: 100%;
+      background: #333;
+      border-radius: 0.25rem;
+      overflow: hidden;
+      height: 1rem;
+    }
+    #progressBar {
+      height: 100%;
+      width: 0;
+      background: var(--ok);
+      transition: width 0.3s;
+    }
     #controls {
       display: flex;
       justify-content: center;
@@ -68,6 +81,7 @@
   </div>
   <div id="results"></div>
   <div id="summary"></div>
+  <div id="progressContainer"><div id="progressBar"></div></div>
 
   <script>
     /* List is intentionally short & focused so the page loads fast.
@@ -89,6 +103,7 @@
     const timeoutInput = document.getElementById('timeoutInput');
     const customHostsInput = document.getElementById('customHostsInput');
     const applyBtn = document.getElementById('applyTimeout');
+    const progressBar = document.getElementById('progressBar');
     timeoutInput.value = TIMEOUT_MS;
     const customParam = params.get('custom') || '';
     customHostsInput.value = customParam;
@@ -161,7 +176,15 @@
     });
 
     const run = async () => {
+      progressBar.style.width = '0';
+      tested = 0;
+      blocked = 0;
       const allHosts = categories.flatMap(c => c.hosts);
+      const total = allHosts.length;
+      const updateProgress = () => {
+        const pct = Math.round((tested / total) * 100);
+        progressBar.style.width = pct + '%';
+      };
       const promises = allHosts.map((h) =>
         testHost(h).then((isBlocked) => {
           tested++;
@@ -169,6 +192,7 @@
           const span = document.querySelector(`[data-host="${sanitizeHost(h)}"]`);
           span.textContent = isBlocked ? 'Blocked' : 'Allowed';
           span.classList.add(isBlocked ? 'ok' : 'fail');
+          updateProgress();
         })
       );
       await Promise.all(promises);
