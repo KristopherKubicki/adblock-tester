@@ -1,8 +1,10 @@
-name: Deploy to GitHub Pages
+name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, staging]
+  pull_request:
+    branches: [main, staging]
   workflow_dispatch:
 
 permissions:
@@ -15,8 +17,39 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+          pip install -r requirements.txt pytest pytest-cov
+      - name: Run Node tests with coverage
+        run: npm test
+      - name: Run Python tests with coverage
+        run: pytest --cov=scripts/update_categories.py --cov-report=xml
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
   build:
     runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
       # ▽ build your site here if needed ▽
@@ -26,6 +59,7 @@ jobs:
 
   deploy:
     needs: build
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

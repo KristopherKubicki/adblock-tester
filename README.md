@@ -1,7 +1,6 @@
 # Adblock Tester
 
-[![CI](https://github.com/kristopherkubicki/adblock-tester/actions/workflows/test.yml/badge.svg)](https://github.com/kristopherkubicki/adblock-tester/actions/workflows/test.yml)
-[![Deploy](https://github.com/kristopherkubicki/adblock-tester/actions/workflows/pages.yml/badge.svg)](https://github.com/kristopherkubicki/adblock-tester/actions/workflows/pages.yml)
+[![CI](https://github.com/kristopherkubicki/adblock-tester/actions/workflows/pages.yml/badge.svg)](https://github.com/kristopherkubicki/adblock-tester/actions/workflows/pages.yml)
 [![codecov](https://codecov.io/gh/kristopherkubicki/adblock-tester/branch/main/graph/badge.svg)](https://codecov.io/gh/kristopherkubicki/adblock-tester)
 
 This repository contains a lightweight ad‑block detection tester that can be hosted using [GitHub Pages](https://pages.github.com/).
@@ -11,7 +10,7 @@ This repository contains a lightweight ad‑block detection tester that can be h
 
 It aims to replace several popular ad‑block test pages that have gone offline or are no longer maintained.
 
-The GitHub Actions workflow in `.github/workflows/pages.yml` automatically publishes the contents of the repository to GitHub Pages whenever changes are pushed to the `main` branch.
+The GitHub Actions workflow in `.github/workflows/pages.yml` runs the full test suite and publishes the site to GitHub Pages whenever changes are pushed to the `main` branch.
 
 To enable Pages on your fork:
 
