@@ -14,6 +14,14 @@ To enable Pages on your fork:
 
 After the workflow runs successfully, the tester will be available at `https://<username>.github.io/<repository>/`.
 
+## Setup
+
+Install the Python requirements before running the helper script:
+
+```bash
+pip install -r requirements.txt
+```
+
 ## Customizing Host Categories
 
 The list of hosts that are tested is stored in `categories.json`. Each entry in
