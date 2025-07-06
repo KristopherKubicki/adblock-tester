@@ -1,5 +1,9 @@
 # Adblock Tester
 
+[![CI](https://github.com/kristopherkubicki/adblock-tester/actions/workflows/test.yml/badge.svg)](https://github.com/kristopherkubicki/adblock-tester/actions/workflows/test.yml)
+[![Deploy](https://github.com/kristopherkubicki/adblock-tester/actions/workflows/pages.yml/badge.svg)](https://github.com/kristopherkubicki/adblock-tester/actions/workflows/pages.yml)
+[![codecov](https://codecov.io/gh/kristopherkubicki/adblock-tester/branch/main/graph/badge.svg)](https://codecov.io/gh/kristopherkubicki/adblock-tester)
+
 This repository contains a lightweight ad‑block detection tester that can be hosted using [GitHub Pages](https://pages.github.com/).
 
 You can try the live tester at [kristopherkubicki.github.io/adblock-tester](https://kristopherkubicki.github.io/adblock-tester/).
