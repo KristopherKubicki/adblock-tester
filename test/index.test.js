@@ -14,6 +14,7 @@ const dummy = () => ({
   appendChild() {},
   addEventListener() {},
   classList: { add() {} },
+  setAttribute() {},
   set innerHTML(_) {},
   get innerHTML() { return ''; },
   set textContent(_) {},

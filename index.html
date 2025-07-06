@@ -115,7 +115,18 @@
       cat.hosts.forEach((h) => {
         const row = document.createElement('div');
         row.className = 'host';
-        row.innerHTML = `<span>${h.replace(/https?:\/\//,'')}</span><span class="status" data-host="${h}">…</span>`;
+        const hostSpan = document.createElement('span');
+        hostSpan.textContent = h.replace(/https?:\/?\//, '');
+        const statusSpan = document.createElement('span');
+        statusSpan.className = 'status';
+        if (statusSpan.setAttribute) {
+          statusSpan.setAttribute('data-host', h);
+        } else {
+          statusSpan['data-host'] = h;
+        }
+        statusSpan.textContent = '…';
+        row.appendChild(hostSpan);
+        row.appendChild(statusSpan);
         wrapper.appendChild(row);
       });
       resultsEl.appendChild(wrapper);
