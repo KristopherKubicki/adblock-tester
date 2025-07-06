@@ -6,6 +6,7 @@ import logging
 import re
 from pathlib import Path
 from typing import Iterable
+from urllib.parse import urlparse
 
 import requests
 from requests import RequestException
@@ -27,6 +28,17 @@ CATEGORY_SOURCES = {
 
 HOST_RE = re.compile(r"^(?:0\.0\.0\.0\s+|127\.0\.0\.1\s+)?")
 FILTER_RE = re.compile(r"\^.*$")
+HOSTNAME_RE = re.compile(r"^[A-Za-z0-9.-]+$")
+
+
+def _is_valid_host(url: str) -> bool:
+    """Return True if URL has a valid HTTPS hostname."""
+    parsed = urlparse(url)
+    return (
+        parsed.scheme == "https"
+        and bool(parsed.netloc)
+        and HOSTNAME_RE.fullmatch(parsed.hostname or "") is not None
+    )
 
 
 def _parse_lines(lines: Iterable[str]) -> list[str]:
@@ -41,7 +53,9 @@ def _parse_lines(lines: Iterable[str]) -> list[str]:
         line = FILTER_RE.sub("", line)
         line = line.split("/")[0]
         if line:
-            hosts.append(f"https://{line}")
+            url = f"https://{line}"
+            if _is_valid_host(url):
+                hosts.append(url)
     return hosts
 
 
