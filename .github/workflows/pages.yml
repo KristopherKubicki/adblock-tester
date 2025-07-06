@@ -19,10 +19,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # ▽ build your site here if needed ▽
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: node scripts/add_build_info.js
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'   # static site output
+          path: "." # static site output
 
   deploy:
     needs: build

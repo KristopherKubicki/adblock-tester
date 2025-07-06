@@ -4,7 +4,8 @@
   "description": "This repository contains a lightweight ad‑block detection tester that can be hosted using [GitHub Pages](https://pages.github.com/).",
   "main": "index.js",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "build": "node scripts/add_build_info.js"
   },
   "keywords": [],
   "author": "",
