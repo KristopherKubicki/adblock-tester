@@ -190,6 +190,7 @@
         <input id="customHostsInput" placeholder="https://example.com/ad.js"
       /></label>
       <button id="applyTimeout">Run Test</button>
+      <button id="copyResults" disabled>Copy Results</button>
     </div>
     <div id="results"></div>
     <div id="summary"></div>
@@ -212,6 +213,7 @@
       let categories = [];
       const wheelMap = new Map();
       const logMap = new Map();
+      let resultsSummary = "";
 
       const extraTests = [
         {
@@ -255,6 +257,7 @@
       const customHostsInput = document.getElementById("customHostsInput");
       const applyBtn = document.getElementById("applyTimeout");
       const progressBar = document.getElementById("progressBar");
+      const copyBtn = document.getElementById("copyResults");
       timeoutInput.value = TIMEOUT_MS;
       const customParam = params.get("custom") || "";
       customHostsInput.value = customParam;
@@ -271,6 +274,18 @@
         }
         location.href = url.toString();
       });
+
+      if (copyBtn && typeof navigator !== "undefined" && navigator.clipboard) {
+        copyBtn.addEventListener("click", () => {
+          navigator.clipboard.writeText(resultsSummary).then(() => {
+            const original = copyBtn.textContent;
+            copyBtn.textContent = "Copied!";
+            setTimeout(() => {
+              copyBtn.textContent = original;
+            }, 1000);
+          });
+        });
+      }
 
       const sanitizeHost = (host) => host.replace(/"/g, "&quot;");
 
@@ -438,7 +453,10 @@
         const summary = document.getElementById("summary");
         const meter = document.getElementById("scoreMeter");
         if (meter) meter.value = pct;
-        summary.textContent = `Blocked ${blocked} / ${tested} (${pct}%)`;
+        const text = `Blocked ${blocked} / ${tested} (${pct}%)`;
+        summary.textContent = text;
+        resultsSummary = text;
+        if (copyBtn) copyBtn.disabled = false;
         progressBar.style.width = "100%";
         progressBar.style.display = "flex";
         progressBar.style.alignItems = "center";
