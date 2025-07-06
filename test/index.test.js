@@ -8,7 +8,7 @@ const root = __dirname ? path.resolve(__dirname, "..") : "..";
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const script = /<script>([\s\S]*?)<\/script>/.exec(html)[1];
 const cleaned = script.replace(/loadCategories\(\)\.then\(run\);/, "");
-const wrapper = `${cleaned}\nreturn { loadCategories, getCategories: () => categories, sanitizeHost, createCategorySection, run, testHost, TIMEOUT_MS };\n//# sourceURL=index.inline.js`;
+const wrapper = `${cleaned}\nreturn { loadCategories, getCategories: () => categories, sanitizeHost, createCategorySection, createExtraSection, runExtraTests, run, testHost, TIMEOUT_MS };\n//# sourceURL=index.inline.js`;
 
 const dummy = () => ({
   appendChild() {},
@@ -36,7 +36,7 @@ function setup(query, data, hooks = {}) {
   };
   const location = new URL("https://example.com/" + query);
   const env = {
-    window: undefined,
+    window: {},
     document,
     location,
     URLSearchParams,
@@ -104,8 +104,14 @@ function setupSpy(query, data, hooks = {}) {
       return summaryEl._text;
     },
   });
+  const adBait = hooks.adBait || dummy();
   const document = {
-    getElementById: (id) => (id === "summary" ? summaryEl : dummy()),
+    getElementById: (id) => {
+      if (id === "summary") return summaryEl;
+      if (id === "adBait") return adBait;
+      if (id === "extraResults") return dummy();
+      return dummy();
+    },
     createElement: (tag) => {
       const el = {
         tag,
@@ -140,16 +146,20 @@ function setupSpy(query, data, hooks = {}) {
       return el;
     },
     querySelector: (selector) => {
-      const m = /\[data-host="([^"]+)"\]/.exec(selector);
-      if (m) {
-        return spans.find((s) => s.attrs["data-host"] === m[1]) || dummy();
+      const hostMatch = /\[data-host="([^"]+)"\]/.exec(selector);
+      if (hostMatch) {
+        return spans.find((s) => s.attrs["data-host"] === hostMatch[1]) || dummy();
+      }
+      const extraMatch = /\[data-extra="([^"]+)"\]/.exec(selector);
+      if (extraMatch) {
+        return spans.find((s) => s.attrs["data-extra"] === extraMatch[1]) || dummy();
       }
       return dummy();
     },
   };
   const location = new URL("https://example.com/" + query);
   const env = {
-    window: undefined,
+    window: {},
     document,
     location,
     URLSearchParams,
@@ -172,7 +182,7 @@ function setupSpy(query, data, hooks = {}) {
     clearTimeout: hooks.clearTimeout || clearTimeout,
     console,
   };
-  const customWrapper = `${cleaned}\nreturn { loadCategories, getCategories: () => categories, sanitizeHost, createCategorySection, run, testHost, TIMEOUT_MS };\n//# sourceURL=index.inline.js`;
+  const customWrapper = `${cleaned}\nreturn { loadCategories, getCategories: () => categories, sanitizeHost, createCategorySection, createExtraSection, runExtraTests, run, testHost, TIMEOUT_MS };\n//# sourceURL=index.inline.js`;
   const fn = new Function(
     "window",
     "document",
@@ -196,7 +206,7 @@ function setupSpy(query, data, hooks = {}) {
     env.clearTimeout,
     env.console,
   );
-  return { ...res, spans, summaryEl, innerHTMLUsed: () => innerHTMLUsed };
+  return { ...res, spans, summaryEl, innerHTMLUsed: () => innerHTMLUsed, env };
 }
 
 test("loads categories.json without custom param", async () => {
@@ -359,4 +369,31 @@ test("testHost resolves true on timeout", async () => {
   callback();
   const res = await promise;
   assert.strictEqual(res, true);
+});
+
+test("createExtraSection builds extra rows", () => {
+  const { createExtraSection, spans } = setupSpy("", []);
+  createExtraSection();
+  const extras = spans.filter((s) => "data-extra" in s.attrs);
+  // two tests defined in page
+  assert.strictEqual(extras.length, 2);
+});
+
+test("runExtraTests reports inline and element blocks", () => {
+  const adBait = { offsetHeight: 0 };
+  const { createExtraSection, runExtraTests, spans, env } = setupSpy("", [], {
+    adBait,
+  });
+  env.window.__adBaitLoaded = undefined;
+  createExtraSection();
+  runExtraTests();
+  const extras = Object.fromEntries(
+    spans
+      .filter((s) => "data-extra" in s.attrs)
+      .map((s) => [s.attrs["data-extra"], s])
+  );
+  assert.strictEqual(extras["inline-script"]._text, "Blocked");
+  assert.ok(extras["inline-script"].classList.added.includes("ok"));
+  assert.strictEqual(extras["element-hiding"]._text, "Blocked");
+  assert.ok(extras["element-hiding"].classList.added.includes("ok"));
 });
