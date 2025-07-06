@@ -7,7 +7,7 @@ const { test } = require('node:test');
 const root = __dirname ? path.resolve(__dirname, '..') : '..';
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const script = /<script>([\s\S]*?)<\/script>/.exec(html)[1];
-const cleaned = script.replace(/loadCategories\(\)\.then\(run\);/, '');
+const cleaned = script.replace(/\n\s*loadCategories\([^\n]*\);\s*\n?/, '\n');
 const wrapper = `${cleaned}\nreturn { loadCategories, getCategories: () => categories };`;
 
 const dummy = () => ({
@@ -20,7 +20,7 @@ const dummy = () => ({
   get textContent() { return ''; },
 });
 
-function setup(query, data) {
+function setup(query, data, fetchImpl) {
   const document = {
     getElementById: () => dummy(),
     createElement: () => dummy(),
@@ -32,7 +32,7 @@ function setup(query, data) {
     document,
     location,
     URLSearchParams,
-    fetch: () => Promise.resolve({ json: () => Promise.resolve(data) }),
+    fetch: fetchImpl || (() => Promise.resolve({ json: () => Promise.resolve(data) })),
     Image: class { set src(_) { this.onload && this.onload(); } },
     setTimeout,
     clearTimeout,
@@ -87,4 +87,15 @@ test('appends custom hosts when query param present', async () => {
   const expected = clone(categoriesData);
   expected.push({ name: 'Custom Hosts', hosts: custom });
   assert.deepStrictEqual(getCategories(), expected);
+});
+
+test('returns false when categories.json fails to load', async () => {
+  const { loadCategories, getCategories } = setup(
+    '',
+    clone(categoriesData),
+    () => Promise.reject(new Error('fail')),
+  );
+  const result = await loadCategories();
+  assert.strictEqual(result, false);
+  assert.deepStrictEqual(getCategories(), []);
 });
