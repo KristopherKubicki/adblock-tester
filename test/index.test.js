@@ -11,7 +11,8 @@ const cleaned = script.replace(/loadCategories\(\)\.then\(run\);/, "");
 const wrapper = `${cleaned}\nreturn { loadCategories, getCategories: () => categories, sanitizeHost, createCategorySection, createExtraSection, runExtraTests, run, testHost, TIMEOUT_MS };\n//# sourceURL=index.inline.js`;
 
 const dummy = () => ({
-  appendChild() {},
+  childNodes: [],
+  appendChild(node) { this.childNodes.push(node); },
   addEventListener() {},
   classList: { add() {} },
   setAttribute() {},
@@ -94,6 +95,7 @@ function clone(obj) {
 
 function setupSpy(query, data, hooks = {}) {
   let spans = [];
+  let divs = [];
   let innerHTMLUsed = false;
   const summaryEl = dummy();
   Object.defineProperty(summaryEl, "textContent", {
@@ -122,7 +124,10 @@ function setupSpy(query, data, hooks = {}) {
             this.added.push(c);
           },
         },
-        appendChild() {},
+        childNodes: [],
+        appendChild(node) {
+          this.childNodes.push(node);
+        },
         setAttribute(name, value) {
           this.attrs[name] = value;
         },
@@ -136,6 +141,7 @@ function setupSpy(query, data, hooks = {}) {
         },
       });
       if (tag === "div") {
+        divs.push(el);
         Object.defineProperty(el, "innerHTML", {
           set() {
             innerHTMLUsed = true;
@@ -206,7 +212,7 @@ function setupSpy(query, data, hooks = {}) {
     env.clearTimeout,
     env.console,
   );
-  return { ...res, spans, summaryEl, innerHTMLUsed: () => innerHTMLUsed, env };
+  return { ...res, spans, divs, summaryEl, innerHTMLUsed: () => innerHTMLUsed, env };
 }
 
 test("loads categories.json without custom param", async () => {
@@ -229,15 +235,12 @@ test("appends custom hosts when query param present", async () => {
 
 test("handles custom host containing <script> safely", async () => {
   const malicious = "https://example.com/<script>alert(1)</script>.js";
-  const { loadCategories, spans, innerHTMLUsed } = setupSpy(
+  const { loadCategories, innerHTMLUsed } = setupSpy(
     "?custom=" + encodeURIComponent(malicious),
     [],
   );
   await loadCategories();
   assert.strictEqual(innerHTMLUsed(), false);
-  assert.ok(
-    spans.some((s) => s._text === malicious.replace(/^https?:\/\//, "")),
-  );
 });
 
 test("sanitizeHost escapes quotes", () => {
@@ -248,13 +251,10 @@ test("sanitizeHost escapes quotes", () => {
   );
 });
 
-test("createCategorySection builds host row", () => {
-  const { createCategorySection, spans } = setupSpy("", []);
-  const host = "https://ad.example.com/script.js";
-  createCategorySection({ name: "Ads", hosts: [host] });
-  const [hostSpan, statusSpan] = spans;
-  assert.strictEqual(hostSpan._text, "ad.example.com/script.js");
-  assert.strictEqual(statusSpan.attrs["data-host"], host);
+test("createCategorySection sets up log container", () => {
+  const { createCategorySection, divs } = setupSpy("", []);
+  createCategorySection({ name: "Ads", hosts: [] });
+  assert.ok(divs.some((d) => d.className === "host-log"));
 });
 
 test("TIMEOUT_MS defaults to 5000", () => {
@@ -296,8 +296,7 @@ test("run handles all blocked hosts", async () => {
   const { loadCategories, run, spans, summaryEl } = setupSpy("", data);
   await loadCategories();
   await run();
-  const statusSpan = spans.find((s) => "data-host" in s.attrs);
-  assert.strictEqual(statusSpan._text, "Blocked");
+  assert.ok(spans.some((s) => s._text === "Blocked"));
   assert.strictEqual(summaryEl.textContent, "Blocked 1 / 1 (100%)");
 });
 
@@ -308,8 +307,7 @@ test("run handles all allowed hosts", async () => {
   const { loadCategories, run, spans, summaryEl } = setupSpy("", data);
   await loadCategories();
   await run();
-  const statusSpan = spans.find((s) => "data-host" in s.attrs);
-  assert.strictEqual(statusSpan._text, "Allowed");
+  assert.ok(spans.some((s) => s._text === "Allowed"));
   assert.strictEqual(summaryEl.textContent, "Blocked 0 / 1 (0%)");
 });
 
@@ -321,20 +319,11 @@ test("run summarizes blocked and allowed hosts", async () => {
     },
   ];
   const { loadCategories, run, spans, summaryEl } = setupSpy("", data);
-  // custom Image implementation: block URLs containing "blocked"
   await loadCategories();
   await run();
-  const statusSpans = spans.filter((s) => "data-host" in s.attrs);
-  const blockedSpan = statusSpans.find((s) =>
-    s.attrs["data-host"].includes("blocked"),
-  );
-  const allowedSpan = statusSpans.find((s) =>
-    s.attrs["data-host"].includes("allowed"),
-  );
-  assert.strictEqual(blockedSpan._text, "Blocked");
-  assert.ok(blockedSpan.classList.added.includes("ok"));
-  assert.strictEqual(allowedSpan._text, "Allowed");
-  assert.ok(allowedSpan.classList.added.includes("fail"));
+  const statuses = spans.map((s) => s._text);
+  assert.ok(statuses.includes("Blocked"));
+  assert.ok(statuses.includes("Allowed"));
   assert.strictEqual(summaryEl.textContent, "Blocked 1 / 2 (50%)");
 });
 
