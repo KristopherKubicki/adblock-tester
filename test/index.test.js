@@ -8,7 +8,19 @@ const root = __dirname ? path.resolve(__dirname, '..') : '..';
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const script = /<script>([\s\S]*?)<\/script>/.exec(html)[1];
 const cleaned = script.replace(/loadCategories\(\)\.then\(run\);/, '');
-const wrapper = `${cleaned}\nreturn { loadCategories, getCategories: () => categories };`;
+const wrapper = `${cleaned}\nreturn { loadCategories, run, getCategories: () => categories };`;
+
+function makeEl() {
+  return {
+    textContent: '',
+    classList: {
+      add(cls) {
+        this.last = cls;
+      },
+      last: '',
+    },
+  };
+}
 
 const dummy = () => ({
   appendChild() {},
@@ -20,20 +32,41 @@ const dummy = () => ({
   get textContent() { return ''; },
 });
 
-function setup(query, data) {
+function setup(query, data, hostStatuses = {}) {
+  const hostElements = {};
+  const summaryEl = makeEl();
   const document = {
-    getElementById: () => dummy(),
+    getElementById: (id) => (id === 'summary' ? summaryEl : dummy()),
     createElement: () => dummy(),
-    querySelector: () => dummy(),
+    querySelector: (sel) => {
+      const m = /\[data-host="(.*)"\]/.exec(sel);
+      if (m) {
+        hostElements[m[1]] ||= makeEl();
+        return hostElements[m[1]];
+      }
+      return dummy();
+    },
   };
   const location = new URL('https://example.com/' + query);
+  class ImageStub {
+    set src(url) {
+      const clean = url.replace(/([&?])cb=\d+$/, '');
+      process.nextTick(() => {
+        if (hostStatuses[clean]) {
+          this.onerror && this.onerror();
+        } else {
+          this.onload && this.onload();
+        }
+      });
+    }
+  }
   const env = {
     window: undefined,
     document,
     location,
     URLSearchParams,
     fetch: () => Promise.resolve({ json: () => Promise.resolve(data) }),
-    Image: class { set src(_) { this.onload && this.onload(); } },
+    Image: ImageStub,
     setTimeout,
     clearTimeout,
     console,
@@ -50,7 +83,7 @@ function setup(query, data) {
     'console',
     wrapper,
   );
-  return fn(
+  const exports = fn(
     env.window,
     env.document,
     env.location,
@@ -61,6 +94,7 @@ function setup(query, data) {
     env.clearTimeout,
     env.console,
   );
+  return { ...exports, getHostElement: (h) => hostElements[h], summaryEl };
 }
 
 const categoriesData = JSON.parse(
@@ -87,4 +121,39 @@ test('appends custom hosts when query param present', async () => {
   const expected = clone(categoriesData);
   expected.push({ name: 'Custom Hosts', hosts: custom });
   assert.deepStrictEqual(getCategories(), expected);
+});
+
+test('run reports host statuses', async () => {
+  const statuses = {};
+  let blocked = 0;
+  categoriesData.forEach((cat, i) => {
+    cat.hosts.forEach((h, j) => {
+      const b = (i + j) % 2 === 0;
+      statuses[h] = b;
+      if (b) blocked++;
+    });
+  });
+  const total = categoriesData.reduce((n, c) => n + c.hosts.length, 0);
+
+  const { loadCategories, run, getHostElement, summaryEl } = setup(
+    '',
+    clone(categoriesData),
+    statuses,
+  );
+  await loadCategories();
+  await run();
+
+  categoriesData.forEach((cat, i) => {
+    cat.hosts.forEach((h, j) => {
+      const el = getHostElement(h);
+      assert.strictEqual(el.textContent, statuses[h] ? 'Blocked' : 'Allowed');
+      assert.strictEqual(el.classList.last, statuses[h] ? 'ok' : 'fail');
+    });
+  });
+
+  const pct = Math.round((blocked / total) * 100);
+  assert.strictEqual(
+    summaryEl.textContent,
+    `Blocked ${blocked} / ${total} (${pct}%)`,
+  );
 });
