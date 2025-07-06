@@ -22,6 +22,7 @@ CATEGORY_SOURCES = {
     ],
     "Social Widgets": [
         "https://raw.githubusercontent.com/easylist/easylist/master/easylist/easylist_social.txt",
+        "https://raw.githubusercontent.com/easylist/easylist/master/fanboy-addon/fanboy_social_general_block.txt",
     ],
 }
 
