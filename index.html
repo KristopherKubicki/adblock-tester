@@ -165,6 +165,46 @@
     const customHostsInput = document.getElementById('customHostsInput');
     const applyBtn = document.getElementById('applyTimeout');
     const progressBar = document.getElementById('progressBar');
+
+    const CACHE_KEY = 'adTestCache';
+    const CACHE_MS = 3600_000; // one hour
+
+    const saveCache = () => {
+      try {
+        localStorage.setItem(
+          CACHE_KEY,
+          JSON.stringify({
+            ts: Date.now(),
+            results: resultsEl.innerHTML,
+            extra: document.getElementById('extraResults').innerHTML,
+            summary: document.getElementById('summary').textContent,
+            pct: document.getElementById('scoreMeter').value,
+          })
+        );
+      } catch {}
+    };
+
+    const restoreCache = () => {
+      try {
+        const data = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+        if (data && Date.now() - data.ts < CACHE_MS) {
+          resultsEl.innerHTML = data.results;
+          document.getElementById('extraResults').innerHTML = data.extra;
+          document.getElementById('summary').textContent = data.summary;
+          const meter = document.getElementById('scoreMeter');
+          if (meter) meter.value = data.pct;
+          progressBar.style.width = '100%';
+          const notice = document.createElement('div');
+          notice.textContent = 'Results cached. Refresh to re‑run.';
+          notice.style.textAlign = 'center';
+          notice.style.fontSize = '.85rem';
+          document.getElementById('controls').after(notice);
+          runExtraTests();
+          return true;
+        }
+      } catch {}
+      return false;
+    };
     timeoutInput.value = TIMEOUT_MS;
     const customParam = params.get('custom') || '';
     customHostsInput.value = customParam;
@@ -343,7 +383,11 @@
       runExtraTests();
     };
 
-    loadCategories().then(run);
+    loadCategories().then(async () => {
+      if (restoreCache()) return;
+      await run();
+      saveCache();
+    }); //INIT
   </script>
 </body>
 </html>
