@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "This repository contains a lightweight ad‑block detection tester that can be hosted using [GitHub Pages](https://pages.github.com/).",
   "scripts": {
-    "test": "node --test",
+    "test": "c8 node --test",
     "update-categories": "python scripts/update_categories.py"
   },
   "keywords": [],
@@ -13,5 +13,8 @@
   },
   "author": "Kristopher Kubicki",
   "license": "MIT",
-  "type": "commonjs"
+  "type": "commonjs",
+  "devDependencies": {
+    "c8": "^8.0.1"
+  }
 }
