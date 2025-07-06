@@ -8,7 +8,7 @@ const root = __dirname ? path.resolve(__dirname, "..") : "..";
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const script = /<script>([\s\S]*?)<\/script>/.exec(html)[1];
 const cleaned = script.replace(/loadCategories\(\)\.then\(run\);/, "");
-const wrapper = `${cleaned}\nreturn { loadCategories, getCategories: () => categories, sanitizeHost, createCategorySection, createExtraSection, runExtraTests, run, testHost, TIMEOUT_MS };\n//# sourceURL=index.inline.js`;
+const wrapper = `${cleaned}\nreturn { loadCategories, getCategories: () => categories, sanitizeHost, createCategorySection, createExtraSection, runExtraTests, run, testHost, TIMEOUT_MS, getSummary: () => resultsSummary };\n//# sourceURL=index.inline.js`;
 
 const dummy = () => ({
   childNodes: [],
@@ -325,6 +325,16 @@ test("run summarizes blocked and allowed hosts", async () => {
   assert.ok(statuses.includes("Blocked"));
   assert.ok(statuses.includes("Allowed"));
   assert.strictEqual(summaryEl.textContent, "Blocked 1 / 2 (50%)");
+});
+
+test("getSummary returns last summary", async () => {
+  const data = [
+    { name: "Test", hosts: ["https://blocked.com/a.js"] },
+  ];
+  const { loadCategories, run, getSummary } = setup("", data);
+  await loadCategories();
+  await run();
+  assert.strictEqual(getSummary(), "Blocked 1 / 1 (100%)");
 });
 
 test("testHost resolves false on load", async () => {
