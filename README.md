@@ -65,8 +65,9 @@ The script fetches several EasyList sources, extracts the hostnames and writes
 them to `categories.json`. A network connection is required when running it.
 
 An automated workflow in `.github/workflows/update_categories.yml` performs the
-same update every week. After regenerating `categories.json`, it runs the tests
-and, on success, publishes the site so the tester is always up to date.
+same update every week. After regenerating `categories.json`, it pushes the
+changes so the regular CI/CD pipeline can run the tests and publish the site
+if everything passes.
 
 
 ## Running Tests
