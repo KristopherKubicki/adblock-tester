@@ -11,26 +11,25 @@ permissions:
   id-token: write
 
 concurrency:
-  group: 'pages'
+  group: pages
   cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Upload site artifact
-        uses: actions/upload-pages-artifact@v3
+      - uses: actions/checkout@v4
+      # ▽ build your site here if needed ▽
+      - uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: ./public   # static site output
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/deploy-pages@v2
-        id: deploy
-        with:
-          artifact_name: github-pages
+      - id: deployment
+        uses: actions/deploy-pages@v4
