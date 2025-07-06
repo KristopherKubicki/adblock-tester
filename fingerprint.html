@@ -121,40 +121,124 @@
         }
       }
 
-      const { vendor: webglVendor, renderer: webglRenderer } = getWebGLInfo();
-
-      const data = {
-        "User Agent": navigator.userAgent,
-        Languages: navigator.languages ? navigator.languages.join(", ") : "",
-        Platform: navigator.platform,
-        "Hardware Concurrency": navigator.hardwareConcurrency,
-        "Device Memory": navigator.deviceMemory,
-        Screen: `${screen.width} x ${screen.height}`,
-        "Color Depth": screen.colorDepth,
-        "Timezone Offset": new Date().getTimezoneOffset(),
-        "Do Not Track": navigator.doNotTrack || window.doNotTrack || "",
-        "Cookies Enabled": navigator.cookieEnabled,
-        "Local Storage": !!window.localStorage,
-        "Session Storage": !!window.sessionStorage,
-        "Touch Points": navigator.maxTouchPoints,
-        Plugins: Array.from(navigator.plugins || [])
-          .map((p) => p.name)
-          .join(", "),
-        "Canvas Hash": getCanvasHash(),
-        "WebGL Vendor": webglVendor,
-        "WebGL Renderer": webglRenderer,
-      };
-      const container = document.getElementById("fp");
-      const dl = document.createElement("dl");
-      for (const [k, v] of Object.entries(data)) {
-        const dt = document.createElement("dt");
-        dt.textContent = k;
-        const dd = document.createElement("dd");
-        dd.textContent = String(v);
-        dl.appendChild(dt);
-        dl.appendChild(dd);
+      function detectFonts() {
+        const baseFonts = ["monospace", "sans-serif", "serif"];
+        const testFonts = [
+          "Arial",
+          "Courier New",
+          "Times New Roman",
+          "Comic Sans MS",
+        ];
+        const span = document.createElement("span");
+        span.textContent = "abcdefghi";
+        span.style.fontSize = "72px";
+        span.style.position = "absolute";
+        span.style.visibility = "hidden";
+        document.body.appendChild(span);
+        const defW = {};
+        const defH = {};
+        for (const f of baseFonts) {
+          span.style.fontFamily = f;
+          defW[f] = span.offsetWidth;
+          defH[f] = span.offsetHeight;
+        }
+        const detected = [];
+        for (const font of testFonts) {
+          for (const base of baseFonts) {
+            span.style.fontFamily = `'${font}',${base}`;
+            if (
+              span.offsetWidth !== defW[base] ||
+              span.offsetHeight !== defH[base]
+            ) {
+              detected.push(font);
+              break;
+            }
+          }
+        }
+        document.body.removeChild(span);
+        return detected.join(", ");
       }
-      container.appendChild(dl);
+
+      function getPublicIP() {
+        return fetch("https://api.ipify.org?format=json")
+          .then((r) => r.json())
+          .then((d) => d.ip)
+          .catch(() => "n/a");
+      }
+
+      function getLocalIPs() {
+        return new Promise((resolve) => {
+          const pc = new RTCPeerConnection({ iceServers: [] });
+          const ips = new Set();
+          pc.createDataChannel("");
+          pc.onicecandidate = (e) => {
+            if (!e.candidate) {
+              pc.close();
+              resolve(Array.from(ips).join(", ") || "n/a");
+              return;
+            }
+            const m = /([0-9]{1,3}(?:\.[0-9]{1,3}){3})/.exec(e.candidate.candidate);
+            if (m) ips.add(m[1]);
+          };
+          pc.createOffer().then((o) => pc.setLocalDescription(o));
+        });
+      }
+
+      function getGeo() {
+        return new Promise((resolve) => {
+          if (!navigator.geolocation) return resolve("n/a");
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              const { latitude, longitude } = pos.coords;
+              resolve(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+            },
+            () => resolve("n/a"),
+            { timeout: 3000 }
+          );
+        });
+      }
+
+      async function render() {
+        const { vendor: webglVendor, renderer: webglRenderer } = getWebGLInfo();
+        const data = {
+          "IP Address": await getPublicIP(),
+          "Local IPs": await getLocalIPs(),
+          "User Agent": navigator.userAgent,
+          Languages: navigator.languages ? navigator.languages.join(", ") : "",
+          Platform: navigator.platform,
+          "Hardware Concurrency": navigator.hardwareConcurrency,
+          "Device Memory": navigator.deviceMemory,
+          Screen: `${screen.width} x ${screen.height}`,
+          "Color Depth": screen.colorDepth,
+          "Timezone Offset": new Date().getTimezoneOffset(),
+          "Do Not Track": navigator.doNotTrack || window.doNotTrack || "",
+          "Cookies Enabled": navigator.cookieEnabled,
+          "Local Storage": !!window.localStorage,
+          "Session Storage": !!window.sessionStorage,
+          "Touch Points": navigator.maxTouchPoints,
+          Plugins: Array.from(navigator.plugins || [])
+            .map((p) => p.name)
+            .join(", "),
+          "Canvas Hash": getCanvasHash(),
+          "WebGL Vendor": webglVendor,
+          "WebGL Renderer": webglRenderer,
+          Fonts: detectFonts(),
+          Geolocation: await getGeo(),
+        };
+        const container = document.getElementById("fp");
+        const dl = document.createElement("dl");
+        for (const [k, v] of Object.entries(data)) {
+          const dt = document.createElement("dt");
+          dt.textContent = k;
+          const dd = document.createElement("dd");
+          dd.textContent = String(v);
+          dl.appendChild(dt);
+          dl.appendChild(dd);
+        }
+        container.appendChild(dl);
+      }
+
+      render();
     </script>
   </body>
 </html>

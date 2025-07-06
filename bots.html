@@ -119,6 +119,11 @@
         },
         { name: "Cookies disabled", fn: () => !navigator.cookieEnabled },
         {
+          name: "Missing permissions API",
+          fn: () => !navigator.permissions,
+        },
+        { name: "No Chrome object", fn: () => !window.chrome },
+        {
           name: "Low hardware cores",
           fn: () =>
             navigator.hardwareConcurrency && navigator.hardwareConcurrency < 2,
