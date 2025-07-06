@@ -1,87 +1,153 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bot Detection</title>
-  <style>
-    :root {
-      font-family: system-ui, sans-serif;
-      --bg: #111;
-      --card: #1e1e1e;
-      --ok: #48c774;
-      --fail: #ff3860;
-    }
-    body {
-      margin: 0;
-      padding: 1rem;
-      background: var(--bg);
-      color: #eee;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-      gap: 1rem;
-    }
-    nav {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-    }
-    nav a {
-      color: #eee;
-      text-decoration: none;
-      font-size: .9rem;
-    }
-    nav a:hover { text-decoration: underline; }
-    h1 { margin: 0 0 0.5rem; text-align:center; }
-    #results {
-      flex: 1 1 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      overflow: hidden;
-    }
-    .check {
-      background: var(--card);
-      padding: 0.5rem 1rem;
-      border-radius: 0.5rem;
-      display: flex;
-      justify-content: space-between;
-    }
-    .status.ok { color: var(--ok); }
-    .status.fail { color: var(--fail); }
-  </style>
-</head>
-<body>
-  <nav>
-    <a href="index.html">Ad Test</a>
-    <a href="bots.html">Bots</a>
-    <a href="fingerprint.html">Fingerprint</a>
-  </nav>
-  <h1>Bot Detection</h1>
-  <div id="results"></div>
-  <script>
-    const checks = [
-      { name: 'navigator.webdriver', fn: () => navigator.webdriver },
-      { name: 'Headless UA', fn: () => /HeadlessChrome/i.test(navigator.userAgent) },
-      { name: 'No plugins', fn: () => navigator.plugins.length === 0 },
-      { name: 'Missing languages', fn: () => !navigator.languages || navigator.languages.length === 0 },
-    ];
-    const resultsEl = document.getElementById('results');
-    checks.forEach(c => {
-      const row = document.createElement('div');
-      row.className = 'check';
-      const name = document.createElement('span');
-      name.textContent = c.name;
-      const status = document.createElement('span');
-      const res = c.fn();
-      status.textContent = res ? 'Yes' : 'No';
-      status.className = 'status ' + (res ? 'fail' : 'ok');
-      row.appendChild(name);
-      row.appendChild(status);
-      resultsEl.appendChild(row);
-    });
-  </script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bot Detection</title>
+    <style>
+      :root {
+        font-family: system-ui, sans-serif;
+        --bg: #111;
+        --card: #1e1e1e;
+        --ok: #48c774;
+        --fail: #ff3860;
+      }
+      body {
+        margin: 0;
+        padding: 1rem;
+        background: var(--bg);
+        color: #eee;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+        gap: 1rem;
+      }
+      nav {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+      }
+      nav a {
+        color: #eee;
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      nav a:hover {
+        text-decoration: underline;
+      }
+      h1 {
+        margin: 0 0 0.5rem;
+        text-align: center;
+      }
+      #results {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        overflow: hidden;
+      }
+      .check {
+        background: var(--card);
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+      }
+      .status.ok {
+        color: var(--ok);
+      }
+      .status.fail {
+        color: var(--fail);
+      }
+      #note {
+        text-align: center;
+        font-size: 0.85rem;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <a href="index.html">Ad Test</a>
+      <a href="bots.html">Bots</a>
+      <a href="fingerprint.html">Fingerprint</a>
+    </nav>
+    <h1>Bot Detection</h1>
+    <p id="note">
+      If any row shows <strong>Yes</strong>, automation or browser tampering
+      might be detected.
+    </p>
+    <div id="results"></div>
+    <script>
+      const glRenderer = (() => {
+        try {
+          const c = document.createElement("canvas");
+          const gl =
+            c.getContext("webgl") || c.getContext("experimental-webgl");
+          if (!gl) return "";
+          const ext = gl.getExtension("WEBGL_debug_renderer_info");
+          return ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : "";
+        } catch (e) {
+          return "";
+        }
+      })();
+
+      const checks = [
+        { name: "navigator.webdriver", fn: () => navigator.webdriver },
+        {
+          name: "Headless UA",
+          fn: () => /HeadlessChrome/i.test(navigator.userAgent),
+        },
+        { name: "No plugins", fn: () => navigator.plugins.length === 0 },
+        {
+          name: "Missing languages",
+          fn: () => !navigator.languages || navigator.languages.length === 0,
+        },
+        {
+          name: "Chrome prop missing",
+          fn: () => /Chrome/i.test(navigator.userAgent) && !window.chrome,
+        },
+        {
+          name: "Vendor mismatch",
+          fn: () =>
+            /Chrome/i.test(navigator.userAgent) &&
+            navigator.vendor !== "Google Inc.",
+        },
+        {
+          name: "WebGL SwiftShader",
+          fn: () => /SwiftShader/i.test(glRenderer),
+        },
+        { name: "Permissions unsupported", fn: () => !navigator.permissions },
+        {
+          name: "Low hardware concurrency",
+          fn: () =>
+            navigator.hardwareConcurrency && navigator.hardwareConcurrency < 2,
+        },
+        {
+          name: "Potential stealth",
+          fn: () =>
+            !navigator.webdriver &&
+            (!navigator.languages ||
+              navigator.languages.length === 0 ||
+              navigator.plugins.length === 0 ||
+              !window.chrome),
+        },
+      ];
+
+      const resultsEl = document.getElementById("results");
+      checks.forEach((c) => {
+        const row = document.createElement("div");
+        row.className = "check";
+        const name = document.createElement("span");
+        name.textContent = c.name;
+        const status = document.createElement("span");
+        const res = c.fn();
+        status.textContent = res ? "Yes" : "No";
+        status.className = "status " + (res ? "fail" : "ok");
+        row.appendChild(name);
+        row.appendChild(status);
+        resultsEl.appendChild(row);
+      });
+    </script>
+  </body>
 </html>
