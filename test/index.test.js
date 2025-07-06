@@ -242,6 +242,55 @@ test("createCategorySection builds host row", () => {
   assert.strictEqual(statusSpan.attrs["data-host"], host);
 });
 
+test("TIMEOUT_MS defaults to 5000", () => {
+  const { TIMEOUT_MS } = setup("", []);
+  assert.strictEqual(TIMEOUT_MS, 5000);
+});
+
+test("TIMEOUT_MS accepts query param", () => {
+  const { TIMEOUT_MS } = setup("?timeout=1500", []);
+  assert.strictEqual(TIMEOUT_MS, 1500);
+});
+
+test("custom hosts trim spaces", async () => {
+  const hosts = [
+    "https://x.com/a.js",
+    "https://y.com/b.js",
+  ];
+  const q =
+    "?custom=" +
+    encodeURIComponent("  https://x.com/a.js , https://y.com/b.js ");
+  const { loadCategories, getCategories } = setup(q, clone(categoriesData));
+  await loadCategories();
+  const expected = clone(categoriesData);
+  expected.push({ name: "Custom Hosts", hosts });
+  assert.deepStrictEqual(getCategories(), expected);
+});
+
+test("run handles all blocked hosts", async () => {
+  const data = [
+    { name: "Test", hosts: ["https://blocked.com/a.js"] },
+  ];
+  const { loadCategories, run, spans, summaryEl } = setupSpy("", data);
+  await loadCategories();
+  await run();
+  const statusSpan = spans.find((s) => "data-host" in s.attrs);
+  assert.strictEqual(statusSpan._text, "Blocked");
+  assert.strictEqual(summaryEl.textContent, "Blocked 1 / 1 (100%)");
+});
+
+test("run handles all allowed hosts", async () => {
+  const data = [
+    { name: "Test", hosts: ["https://allowed.com/a.js"] },
+  ];
+  const { loadCategories, run, spans, summaryEl } = setupSpy("", data);
+  await loadCategories();
+  await run();
+  const statusSpan = spans.find((s) => "data-host" in s.attrs);
+  assert.strictEqual(statusSpan._text, "Allowed");
+  assert.strictEqual(summaryEl.textContent, "Blocked 0 / 1 (0%)");
+});
+
 test("run summarizes blocked and allowed hosts", async () => {
   const data = [
     {
