@@ -8,7 +8,7 @@ const root = __dirname ? path.resolve(__dirname, "..") : "..";
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const script = /<script>([\s\S]*?)<\/script>/.exec(html)[1];
 const cleaned = script.replace(/loadCategories\(\)\.then\(run\);/, "");
-const wrapper = `${cleaned}\nreturn { loadCategories, getCategories: () => categories, sanitizeHost, createCategorySection, run, testHost, TIMEOUT_MS };`;
+const wrapper = `${cleaned}\nreturn { loadCategories, getCategories: () => categories, sanitizeHost, createCategorySection, run, testHost, TIMEOUT_MS };\n//# sourceURL=index.inline.js`;
 
 const dummy = () => ({
   appendChild() {},
@@ -172,7 +172,7 @@ function setupSpy(query, data, hooks = {}) {
     clearTimeout: hooks.clearTimeout || clearTimeout,
     console,
   };
-  const customWrapper = `${cleaned}\nreturn { loadCategories, getCategories: () => categories, sanitizeHost, createCategorySection, run, testHost, TIMEOUT_MS };`;
+  const customWrapper = `${cleaned}\nreturn { loadCategories, getCategories: () => categories, sanitizeHost, createCategorySection, run, testHost, TIMEOUT_MS };\n//# sourceURL=index.inline.js`;
   const fn = new Function(
     "window",
     "document",
