@@ -1,8 +1,8 @@
+import argparse
+import bisect
 import json
 from pathlib import Path
 from urllib.parse import urlparse
-import argparse
-import bisect
 
 
 def load_coverage(path: Path):
@@ -12,7 +12,7 @@ def load_coverage(path: Path):
         if not url or url.startswith("node:"):
             continue
         parsed = urlparse(url)
-        if parsed.scheme == 'file':
+        if parsed.scheme == "file":
             fpath = Path(parsed.path)
         else:
             fpath = Path(url)
@@ -80,6 +80,7 @@ def main():
         outfile = Path(args.output)
         outfile.parent.mkdir(parents=True, exist_ok=True)
         write_lcov(results, outfile)
+
 
 if __name__ == "__main__":
     main()

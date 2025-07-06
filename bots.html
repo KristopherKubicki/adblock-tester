@@ -1,87 +1,131 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bot Detection</title>
-  <style>
-    :root {
-      font-family: system-ui, sans-serif;
-      --bg: #111;
-      --card: #1e1e1e;
-      --ok: #48c774;
-      --fail: #ff3860;
-    }
-    body {
-      margin: 0;
-      padding: 1rem;
-      background: var(--bg);
-      color: #eee;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-      gap: 1rem;
-    }
-    nav {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-    }
-    nav a {
-      color: #eee;
-      text-decoration: none;
-      font-size: .9rem;
-    }
-    nav a:hover { text-decoration: underline; }
-    h1 { margin: 0 0 0.5rem; text-align:center; }
-    #results {
-      flex: 1 1 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      overflow: hidden;
-    }
-    .check {
-      background: var(--card);
-      padding: 0.5rem 1rem;
-      border-radius: 0.5rem;
-      display: flex;
-      justify-content: space-between;
-    }
-    .status.ok { color: var(--ok); }
-    .status.fail { color: var(--fail); }
-  </style>
-</head>
-<body>
-  <nav>
-    <a href="index.html">Ad Test</a>
-    <a href="bots.html">Bots</a>
-    <a href="fingerprint.html">Fingerprint</a>
-  </nav>
-  <h1>Bot Detection</h1>
-  <div id="results"></div>
-  <script>
-    const checks = [
-      { name: 'navigator.webdriver', fn: () => navigator.webdriver },
-      { name: 'Headless UA', fn: () => /HeadlessChrome/i.test(navigator.userAgent) },
-      { name: 'No plugins', fn: () => navigator.plugins.length === 0 },
-      { name: 'Missing languages', fn: () => !navigator.languages || navigator.languages.length === 0 },
-    ];
-    const resultsEl = document.getElementById('results');
-    checks.forEach(c => {
-      const row = document.createElement('div');
-      row.className = 'check';
-      const name = document.createElement('span');
-      name.textContent = c.name;
-      const status = document.createElement('span');
-      const res = c.fn();
-      status.textContent = res ? 'Yes' : 'No';
-      status.className = 'status ' + (res ? 'fail' : 'ok');
-      row.appendChild(name);
-      row.appendChild(status);
-      resultsEl.appendChild(row);
-    });
-  </script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bot Detection</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap");
+      :root {
+        font-family: "Inter", system-ui, sans-serif;
+        font-size: 16px;
+        --bg-dark: #111;
+        --bg-light: #1e1e1e;
+        --accent-green: #16a34a;
+        --warn-red: #dc2626;
+      }
+      body {
+        margin: 0;
+        padding: 1rem;
+        background: var(--bg-dark);
+        color: #eee;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+        gap: 1rem;
+      }
+      nav {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+      }
+      nav a {
+        color: #eee;
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      nav a:hover {
+        text-decoration: underline;
+      }
+      h1 {
+        margin: 0 0 0.5rem;
+        text-align: center;
+      }
+      #results {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        overflow: hidden;
+      }
+      .check {
+        background: var(--bg-light);
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+      }
+      .check {
+        transition: filter 0.2s;
+      }
+      .check:hover {
+        filter: brightness(1.04);
+      }
+      .status.ok {
+        color: var(--accent-green);
+      }
+      .status.fail {
+        color: var(--warn-red);
+      }
+      .badge {
+        padding: 0 0.5rem;
+        border-radius: 999px;
+        color: #fff;
+      }
+      .badge--ok {
+        background: var(--accent-green);
+      }
+      .badge--fail {
+        background: var(--warn-red);
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg-dark: #fafafa;
+          --bg-light: #fff;
+        }
+        body {
+          color: #111;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <a href="index.html">Ad Test</a>
+      <a href="bots.html">Bots</a>
+      <a href="fingerprint.html">Fingerprint</a>
+    </nav>
+    <h1>Bot Detection</h1>
+    <div id="results"></div>
+    <script>
+      const checks = [
+        { name: "navigator.webdriver", fn: () => navigator.webdriver },
+        {
+          name: "Headless UA",
+          fn: () => /HeadlessChrome/i.test(navigator.userAgent),
+        },
+        { name: "No plugins", fn: () => navigator.plugins.length === 0 },
+        {
+          name: "Missing languages",
+          fn: () => !navigator.languages || navigator.languages.length === 0,
+        },
+      ];
+      const resultsEl = document.getElementById("results");
+      checks.forEach((c) => {
+        const row = document.createElement("div");
+        row.className = "check";
+        const name = document.createElement("span");
+        name.textContent = c.name;
+        const status = document.createElement("span");
+        const res = c.fn();
+        status.textContent = res ? "Yes" : "No";
+        status.className =
+          "status badge " + (res ? "fail badge--fail" : "ok badge--ok");
+        row.appendChild(name);
+        row.appendChild(status);
+        resultsEl.appendChild(row);
+      });
+    </script>
+  </body>
 </html>
