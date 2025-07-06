@@ -1,7 +1,7 @@
 # Adblock Tester
 
 [![CI](https://github.com/kristopherkubicki/adblock-tester/actions/workflows/pages.yml/badge.svg)](https://github.com/kristopherkubicki/adblock-tester/actions/workflows/pages.yml)
-[![codecov](https://codecov.io/gh/kristopherkubicki/adblock-tester/branch/main/graph/badge.svg)](https://codecov.io/gh/kristopherkubicki/adblock-tester)
+[![Coverage](https://codecov.io/gh/kristopherkubicki/adblock-tester/graph/badge.svg?token=5BO90KN4RC)](https://codecov.io/gh/kristopherkubicki/adblock-tester)
 
 This repository contains a lightweight ad‑block detection tester that can be hosted using [GitHub Pages](https://pages.github.com/).
 
@@ -18,7 +18,7 @@ To enable Pages on your fork:
 2. Select **Pages** from the sidebar.
 3. Choose **GitHub Actions** as the source and save.
 
-After the workflow runs successfully, the tester will be available at `https://<username>.github.io/<repository>/`.
+After the workflow runs successfully, the tester will be available at `https://<username>.github.io/<repository>/`. You can see mine at [https://kristopherkubicki.github.io/adblock-tester/](https://kristopherkubicki.github.io/adblock-tester/)
 
 ## Setup
 
