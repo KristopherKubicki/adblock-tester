@@ -22,7 +22,7 @@ jobs:
       # ▽ build your site here if needed ▽
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: ./public   # static site output
+          path: '.'   # static site output
 
   deploy:
     needs: build
