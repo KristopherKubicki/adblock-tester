@@ -33,7 +33,14 @@ https://<username>.github.io/<repository>/?custom=https://example.com/ad.js
 
 ## Updating Categories from EasyList
 
-Run the helper script to download host lists and regenerate `categories.json`:
+Install the Python dependencies and run the helper script to download host lists
+and regenerate `categories.json`:
+
+```bash
+pip install -r requirements.txt
+```
+
+Then execute the script:
 
 ```bash
 python scripts/update_categories.py
