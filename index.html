@@ -106,6 +106,8 @@
       location.href = url.toString();
     });
 
+    const sanitizeHost = (host) => host.replace(/"/g, '&quot;');
+
     const createCategorySection = (cat) => {
       const wrapper = document.createElement('div');
       wrapper.className = 'category';
@@ -113,9 +115,20 @@
       title.textContent = cat.name;
       wrapper.appendChild(title);
       cat.hosts.forEach((h) => {
+        const sanitized = sanitizeHost(h);
         const row = document.createElement('div');
         row.className = 'host';
-        row.innerHTML = `<span>${h.replace(/https?:\/\//,'')}</span><span class="status" data-host="${h}">…</span>`;
+
+        const hostSpan = document.createElement('span');
+        hostSpan.textContent = h.replace(/https?:\/\//, '');
+        row.appendChild(hostSpan);
+
+        const statusSpan = document.createElement('span');
+        statusSpan.className = 'status';
+        statusSpan.setAttribute('data-host', sanitized);
+        statusSpan.textContent = '…';
+        row.appendChild(statusSpan);
+
         wrapper.appendChild(row);
       });
       resultsEl.appendChild(wrapper);
@@ -153,7 +166,7 @@
         testHost(h).then((isBlocked) => {
           tested++;
           if (isBlocked) blocked++;
-          const span = document.querySelector(`[data-host="${h}"]`);
+          const span = document.querySelector(`[data-host="${sanitizeHost(h)}"]`);
           span.textContent = isBlocked ? 'Blocked' : 'Allowed';
           span.classList.add(isBlocked ? 'ok' : 'fail');
         })
