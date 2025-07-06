@@ -8,7 +8,7 @@ const root = __dirname ? path.resolve(__dirname, "..") : "..";
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const script = /<script>([\s\S]*?)<\/script>/.exec(html)[1];
 const cleaned = script.replace(/loadCategories\(\)\.then\(run\);/, "");
-const wrapper = `${cleaned}\nreturn { loadCategories, getCategories: () => categories, sanitizeHost, createCategorySection, run, TIMEOUT_MS };`;
+const wrapper = `${cleaned}\nreturn { loadCategories, getCategories: () => categories, sanitizeHost, createCategorySection, run, testHost, TIMEOUT_MS };`;
 
 const dummy = () => ({
   appendChild() {},
@@ -28,7 +28,7 @@ const dummy = () => ({
   },
 });
 
-function setup(query, data) {
+function setup(query, data, hooks = {}) {
   const document = {
     getElementById: () => dummy(),
     createElement: () => dummy(),
@@ -41,21 +41,22 @@ function setup(query, data) {
     location,
     URLSearchParams,
     fetch: () => Promise.resolve({ json: () => Promise.resolve(data) }),
-    Image: class {
-      constructor() {
-        this.width = 0;
-        this.height = 0;
-      }
-      set src(url) {
-        if (url.includes("blocked")) {
-          this.onerror && this.onerror();
-        } else {
-          this.onload && this.onload();
+    Image: hooks.Image ||
+      class {
+        constructor() {
+          this.width = 0;
+          this.height = 0;
         }
-      }
-    },
-    setTimeout,
-    clearTimeout,
+        set src(url) {
+          if (url.includes("blocked")) {
+            this.onerror && this.onerror();
+          } else {
+            this.onload && this.onload();
+          }
+        }
+      },
+    setTimeout: hooks.setTimeout || setTimeout,
+    clearTimeout: hooks.clearTimeout || clearTimeout,
     console,
   };
   const fn = new Function(
@@ -153,24 +154,25 @@ function setupSpy(query, data, hooks = {}) {
     location,
     URLSearchParams,
     fetch: () => Promise.resolve({ json: () => Promise.resolve(data) }),
-    Image: class {
-      constructor() {
-        this.width = 0;
-        this.height = 0;
-      }
-      set src(url) {
-        if (url.includes("blocked")) {
-          this.onerror && this.onerror();
-        } else {
-          this.onload && this.onload();
+    Image: hooks.Image ||
+      class {
+        constructor() {
+          this.width = 0;
+          this.height = 0;
         }
-      }
-    },
-    setTimeout,
-    clearTimeout,
+        set src(url) {
+          if (url.includes("blocked")) {
+            this.onerror && this.onerror();
+          } else {
+            this.onload && this.onload();
+          }
+        }
+      },
+    setTimeout: hooks.setTimeout || setTimeout,
+    clearTimeout: hooks.clearTimeout || clearTimeout,
     console,
   };
-  const customWrapper = `${cleaned}\nreturn { loadCategories, getCategories: () => categories, sanitizeHost, createCategorySection, run, TIMEOUT_MS };`;
+  const customWrapper = `${cleaned}\nreturn { loadCategories, getCategories: () => categories, sanitizeHost, createCategorySection, run, testHost, TIMEOUT_MS };`;
   const fn = new Function(
     "window",
     "document",
@@ -324,4 +326,37 @@ test("run summarizes blocked and allowed hosts", async () => {
   assert.strictEqual(allowedSpan._text, "Allowed");
   assert.ok(allowedSpan.classList.added.includes("fail"));
   assert.strictEqual(summaryEl.textContent, "Blocked 1 / 2 (50%)");
+});
+
+test("testHost resolves false on load", async () => {
+  const { testHost } = setup("", []);
+  const res = await testHost("https://allowed.com/a.js");
+  assert.strictEqual(res, false);
+});
+
+test("testHost resolves true on error", async () => {
+  const { testHost } = setup("", []);
+  const res = await testHost("https://blocked.com/a.js");
+  assert.strictEqual(res, true);
+});
+
+test("testHost resolves true on timeout", async () => {
+  let timer;
+  let callback;
+  const hooks = {
+    Image: class {
+      set src(_) {}
+    },
+    setTimeout(fn, ms) {
+      callback = fn;
+      timer = 1;
+      return timer;
+    },
+    clearTimeout() {},
+  };
+  const { testHost } = setupSpy("?timeout=1", [], hooks);
+  const promise = testHost("https://timeout.com/a.js");
+  callback();
+  const res = await promise;
+  assert.strictEqual(res, true);
 });
