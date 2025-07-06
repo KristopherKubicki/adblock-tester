@@ -252,6 +252,13 @@ test("TIMEOUT_MS accepts query param", () => {
   assert.strictEqual(TIMEOUT_MS, 1500);
 });
 
+test("TIMEOUT_MS ignores invalid values", () => {
+  const { TIMEOUT_MS: bad } = setup("?timeout=foo", []);
+  const { TIMEOUT_MS: negative } = setup("?timeout=-10", []);
+  assert.strictEqual(bad, 5000);
+  assert.strictEqual(negative, 5000);
+});
+
 test("custom hosts trim spaces", async () => {
   const hosts = [
     "https://x.com/a.js",
