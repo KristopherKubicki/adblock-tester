@@ -30,11 +30,13 @@ jobs:
           else
             npm install
           fi
-          pip install -r requirements.txt
+          pip install -r requirements.txt pytest
       - name: Update categories
         run: python scripts/update_categories.py
-      - name: Run tests
+      - name: Run Node tests
         run: npm test
+      - name: Run Python tests
+        run: pytest
       - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
