@@ -15,6 +15,9 @@ const dummy = () => ({
   addEventListener() {},
   classList: { add() {} },
   setAttribute() {},
+  style: { width: 0, height: 0 },
+  width: 0,
+  height: 0,
   set innerHTML(_) {},
   get innerHTML() {
     return "";
