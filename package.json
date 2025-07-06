@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "This repository contains a lightweight ad‑block detection tester that can be hosted using [GitHub Pages](https://pages.github.com/).",
   "scripts": {
-    "test": "c8 node --test",
+    "test": "NODE_V8_COVERAGE=coverage node --test && python scripts/v8_to_lcov.py",
     "update-categories": "python scripts/update_categories.py"
   },
   "keywords": [],

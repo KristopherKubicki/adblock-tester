@@ -75,8 +75,11 @@ The repository includes Node and Python tests. Run them with coverage using:
 
 ```
 npm test
-pytest --cov=scripts/update_categories.py
+pytest
+
 ```
+
+The Node tests write V8 data to `coverage/lcov.info` so Codecov can report results.
 
 ## License
 
