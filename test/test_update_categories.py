@@ -1,6 +1,7 @@
 import importlib
 import json
 import sys
+import pytest
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent.parent
@@ -75,3 +76,57 @@ def test_parse_lines_strip_paths():
         "https://example.com",
         "https://example.net",
     ]
+
+def test_update_categories_retry(tmp_path, monkeypatch):
+    calls = []
+    def fail_once(url, timeout=30):
+        calls.append(url)
+        if len(calls) == 1:
+            raise uc.requests.RequestException("boom")
+        return DummyResp("example.com")
+
+    monkeypatch.setattr(uc, "CATEGORY_SOURCES", {"Demo": ["http://example.com"]})
+    monkeypatch.setattr(uc.requests, "get", fail_once)
+
+    out = tmp_path / "out.json"
+    uc.update_categories(out, max_retries=2)
+    assert len(calls) == 2
+    assert json.loads(out.read_text()) == [{"name": "Demo", "hosts": ["https://example.com"]}]
+
+
+def test_update_categories_failure_raises(tmp_path, monkeypatch):
+    def always_fail(url, timeout=30):
+        raise uc.requests.RequestException("boom")
+
+    monkeypatch.setattr(uc, "CATEGORY_SOURCES", {"Demo": ["http://example.com"]})
+    monkeypatch.setattr(uc.requests, "get", always_fail)
+
+    out = tmp_path / "out.json"
+    with pytest.raises(uc.requests.RequestException):
+        uc.update_categories(out, max_retries=2)
+
+
+def test_update_categories_dedup_sort(tmp_path, monkeypatch):
+    content_a = "tracker.com\ntracker.com"
+    content_b = "ads.com\nbads.com"  # not dedup across sources
+
+    def get_a(url, timeout=30):
+        return DummyResp(content_a)
+
+    def get_b(url, timeout=30):
+        return DummyResp(content_b)
+
+    monkeypatch.setattr(
+        uc,
+        "CATEGORY_SOURCES",
+        {"Demo": ["a", "b"]},
+    )
+    monkeypatch.setattr(uc.requests, "get", lambda url, timeout=30: get_a(url) if url == "a" else get_b(url))
+
+    out = tmp_path / "out.json"
+    uc.update_categories(out)
+    data = json.loads(out.read_text())
+    assert data == [
+        {"name": "Demo", "hosts": ["https://ads.com", "https://bads.com", "https://tracker.com"]}
+    ]
+
