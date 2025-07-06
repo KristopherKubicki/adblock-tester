@@ -21,7 +21,6 @@ CATEGORY_SOURCES = {
         "https://raw.githubusercontent.com/easylist/easylist/master/easyprivacy/easyprivacy_trackingservers.txt",
     ],
     "Social Widgets": [
-        "https://raw.githubusercontent.com/easylist/easylist/master/easylist/easylist_social.txt",
         "https://raw.githubusercontent.com/easylist/easylist/master/fanboy-addon/fanboy_social_general_block.txt",
     ],
 }
