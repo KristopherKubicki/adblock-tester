@@ -68,11 +68,11 @@ them to `categories.json`. A network connection is required when running it.
 
 ## Running Tests
 
-The repository includes a small Node-based test suite using the built-in
-`node:test` framework. Run it with:
+The repository includes Node and Python tests. Run them with coverage using:
 
 ```
 npm test
+pytest --cov=scripts/update_categories.py
 ```
 
 ## License

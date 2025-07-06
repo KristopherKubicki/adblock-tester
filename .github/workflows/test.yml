@@ -1,4 +1,4 @@
-name: Node.js CI
+name: Test Suite
 
 on:
   push:
@@ -11,6 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -22,8 +26,11 @@ jobs:
           else
             npm install
           fi
-      - name: Run tests with coverage
+          pip install -r requirements.txt pytest pytest-cov
+      - name: Run Node tests with coverage
         run: npm test
+      - name: Run Python tests with coverage
+        run: pytest --cov=scripts/update_categories.py --cov-report=xml
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
