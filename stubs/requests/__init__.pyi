@@ -1,0 +1,9 @@
+class RequestException(Exception):
+    ...
+
+class Response:
+    text: str
+    status_code: int
+    def raise_for_status(self) -> None: ...
+
+def get(url: str, timeout: int = ...) -> Response: ...
