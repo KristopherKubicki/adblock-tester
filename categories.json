@@ -73,7 +73,17 @@
       "https://www.shopify.com",
       "https://www.usa.gov",
       "https://www.xnxx.com",
-      "https://www.youtube.com"
+      "https://www.youtube.com",
+      "https://ajax.googleapis.com",
+      "https://fonts.googleapis.com",
+      "https://fonts.gstatic.com",
+      "https://code.jquery.com",
+      "https://cdn.polyfill.io",
+      "https://cdn.datadoghq.com",
+      "https://cdn.syndication.twimg.com",
+      "https://cdn.sstatic.net",
+      "https://cdn.onesignal.com",
+      "https://unpkg.com"
     ]
   },
 
