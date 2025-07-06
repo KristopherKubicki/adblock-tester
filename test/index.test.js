@@ -14,18 +14,20 @@ const dummy = () => ({
   appendChild() {},
   addEventListener() {},
   classList: { add() {} },
+  setAttribute() {},
   set innerHTML(_) {},
   get innerHTML() { return ''; },
   set textContent(_) {},
   get textContent() { return ''; },
 });
 
-function setup(query, data) {
-  const document = {
-    getElementById: () => dummy(),
-    createElement: () => dummy(),
-    querySelector: () => dummy(),
-  };
+function setup(query, data, docOverrides) {
+  const document =
+    docOverrides || {
+      getElementById: () => dummy(),
+      createElement: () => dummy(),
+      querySelector: () => dummy(),
+    };
   const location = new URL('https://example.com/' + query);
   const env = {
     window: undefined,
@@ -87,4 +89,32 @@ test('appends custom hosts when query param present', async () => {
   const expected = clone(categoriesData);
   expected.push({ name: 'Custom Hosts', hosts: custom });
   assert.deepStrictEqual(getCategories(), expected);
+});
+
+test('host names are inserted safely', async () => {
+  let innerHTMLUsed = false;
+  const instrumented = {
+    getElementById: () => dummy(),
+    createElement: () => ({
+      appendChild() {},
+      addEventListener() {},
+      classList: { add() {} },
+      setAttribute() {},
+      set innerHTML(_) {
+        innerHTMLUsed = true;
+      },
+      get innerHTML() {
+        return '';
+      },
+      set textContent(_) {},
+      get textContent() {
+        return '';
+      },
+    }),
+    querySelector: () => dummy(),
+  };
+  const hostile = [{ name: 'X', hosts: ['<img src=x>'] }];
+  const { loadCategories } = setup('', hostile, instrumented);
+  await loadCategories();
+  assert.strictEqual(innerHTMLUsed, false);
 });
