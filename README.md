@@ -33,10 +33,18 @@ https://<username>.github.io/<repository>/?custom=https://example.com/ad.js
 
 ## Updating Categories from EasyList
 
-Run the helper script to download host lists and regenerate `categories.json`:
+Run the helper script to download host lists and regenerate `categories.json`.
+Install the required dependencies first:
 
 ```bash
+pip install -r requirements.txt
 python scripts/update_categories.py
+```
+
+If you prefer, the same command is available via npm:
+
+```bash
+npm run update-categories
 ```
 
 The script fetches several EasyList sources, extracts the hostnames and writes
@@ -51,3 +59,7 @@ The repository includes a small Node-based test suite using the built-in
 ```
 npm test
 ```
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
