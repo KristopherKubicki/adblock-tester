@@ -125,14 +125,17 @@
         { name: "No Chrome object", fn: () => !window.chrome },
         {
           name: "Low hardware cores",
-          fn: () => navigator.hardwareConcurrency && navigator.hardwareConcurrency < 2,
+          fn: () =>
+            navigator.hardwareConcurrency && navigator.hardwareConcurrency < 2,
         },
         {
           name: "No WebGL",
           fn: () => {
             try {
               const c = document.createElement("canvas");
-              return !c.getContext("webgl") && !c.getContext("experimental-webgl");
+              return (
+                !c.getContext("webgl") && !c.getContext("experimental-webgl")
+              );
             } catch (e) {
               return true;
             }

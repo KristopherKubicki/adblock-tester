@@ -59,6 +59,12 @@
         text-transform: uppercase;
         letter-spacing: 0.05em;
       }
+      .extra-group {
+        font-size: 0.75rem;
+        margin: 0.25rem 0;
+        text-transform: uppercase;
+        opacity: 0.8;
+      }
       .wheel {
         position: relative;
         --p: 0;
@@ -199,6 +205,18 @@
     <script id="ad-bait">
       window.__adBaitLoaded = true;
     </script>
+    <script id="fetch-bait">
+      fetch("https://example.com/ad.js")
+        .then(() => {
+          window.__fetchBaitLoaded = true;
+        })
+        .catch(() => {});
+    </script>
+    <iframe
+      id="iframeBait"
+      style="width: 1px; height: 1px; position: absolute; left: -9999px"
+      src="javascript:top.__iframeBaitLoaded=true;"
+    ></iframe>
     <div
       id="adBait"
       class="ad-banner"
@@ -218,11 +236,13 @@
       const extraTests = [
         {
           id: "inline-script",
+          group: "Script",
           name: "Inline Script Bait",
           isBlocked: () => window.__adBaitLoaded !== true,
         },
         {
           id: "element-hiding",
+          group: "DOM",
           name: "Element Hiding",
           isBlocked: () => {
             const el = document.getElementById("adBait");
@@ -234,6 +254,18 @@
               style.visibility === "hidden"
             );
           },
+        },
+        {
+          id: "iframe-bait",
+          group: "DOM",
+          name: "Iframe Bait",
+          isBlocked: () => window.__iframeBaitLoaded !== true,
+        },
+        {
+          id: "fetch-bait",
+          group: "Network",
+          name: "Fetch Bait",
+          isBlocked: () => window.__fetchBaitLoaded !== true,
         },
       ];
 
@@ -316,7 +348,15 @@
         const title = document.createElement("h2");
         title.textContent = "Additional Checks";
         wrapper.appendChild(title);
+        let currentGroup;
         extraTests.forEach((t) => {
+          if (t.group && t.group !== currentGroup) {
+            currentGroup = t.group;
+            const g = document.createElement("div");
+            g.className = "extra-group";
+            g.textContent = currentGroup;
+            wrapper.appendChild(g);
+          }
           const row = document.createElement("div");
           row.className = "host";
           const label = document.createElement("span");

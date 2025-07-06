@@ -1,5 +1,4 @@
-class RequestException(Exception):
-    ...
+class RequestException(Exception): ...
 
 class Response:
     text: str

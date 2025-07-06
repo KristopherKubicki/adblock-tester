@@ -12,7 +12,9 @@ const wrapper = `${cleaned}\nreturn { loadCategories, getCategories: () => categ
 
 const dummy = () => ({
   childNodes: [],
-  appendChild(node) { this.childNodes.push(node); },
+  appendChild(node) {
+    this.childNodes.push(node);
+  },
   addEventListener() {},
   classList: { add() {} },
   setAttribute() {},
@@ -41,8 +43,14 @@ function setup(query, data, hooks = {}) {
     document,
     location,
     URLSearchParams,
-    fetch: () => Promise.resolve({ json: () => Promise.resolve(data) }),
-    Image: hooks.Image ||
+    fetch: (url) => {
+      if (url.includes("categories.json")) {
+        return Promise.resolve({ json: () => Promise.resolve(data) });
+      }
+      return hooks.fetch ? hooks.fetch(url) : Promise.resolve({ ok: true });
+    },
+    Image:
+      hooks.Image ||
       class {
         constructor() {
           this.width = 0;
@@ -154,11 +162,15 @@ function setupSpy(query, data, hooks = {}) {
     querySelector: (selector) => {
       const hostMatch = /\[data-host="([^"]+)"\]/.exec(selector);
       if (hostMatch) {
-        return spans.find((s) => s.attrs["data-host"] === hostMatch[1]) || dummy();
+        return (
+          spans.find((s) => s.attrs["data-host"] === hostMatch[1]) || dummy()
+        );
       }
       const extraMatch = /\[data-extra="([^"]+)"\]/.exec(selector);
       if (extraMatch) {
-        return spans.find((s) => s.attrs["data-extra"] === extraMatch[1]) || dummy();
+        return (
+          spans.find((s) => s.attrs["data-extra"] === extraMatch[1]) || dummy()
+        );
       }
       return dummy();
     },
@@ -169,8 +181,14 @@ function setupSpy(query, data, hooks = {}) {
     document,
     location,
     URLSearchParams,
-    fetch: () => Promise.resolve({ json: () => Promise.resolve(data) }),
-    Image: hooks.Image ||
+    fetch: (url) => {
+      if (url.includes("categories.json")) {
+        return Promise.resolve({ json: () => Promise.resolve(data) });
+      }
+      return hooks.fetch ? hooks.fetch(url) : Promise.resolve({ ok: true });
+    },
+    Image:
+      hooks.Image ||
       class {
         constructor() {
           this.width = 0;
@@ -212,7 +230,14 @@ function setupSpy(query, data, hooks = {}) {
     env.clearTimeout,
     env.console,
   );
-  return { ...res, spans, divs, summaryEl, innerHTMLUsed: () => innerHTMLUsed, env };
+  return {
+    ...res,
+    spans,
+    divs,
+    summaryEl,
+    innerHTMLUsed: () => innerHTMLUsed,
+    env,
+  };
 }
 
 test("loads categories.json without custom param", async () => {
@@ -275,10 +300,7 @@ test("TIMEOUT_MS ignores invalid values", () => {
 });
 
 test("custom hosts trim spaces", async () => {
-  const hosts = [
-    "https://x.com/a.js",
-    "https://y.com/b.js",
-  ];
+  const hosts = ["https://x.com/a.js", "https://y.com/b.js"];
   const q =
     "?custom=" +
     encodeURIComponent("  https://x.com/a.js , https://y.com/b.js ");
@@ -290,9 +312,7 @@ test("custom hosts trim spaces", async () => {
 });
 
 test("run handles all blocked hosts", async () => {
-  const data = [
-    { name: "Test", hosts: ["https://blocked.com/a.js"] },
-  ];
+  const data = [{ name: "Test", hosts: ["https://blocked.com/a.js"] }];
   const { loadCategories, run, spans, summaryEl } = setupSpy("", data);
   await loadCategories();
   await run();
@@ -301,9 +321,7 @@ test("run handles all blocked hosts", async () => {
 });
 
 test("run handles all allowed hosts", async () => {
-  const data = [
-    { name: "Test", hosts: ["https://allowed.com/a.js"] },
-  ];
+  const data = [{ name: "Test", hosts: ["https://allowed.com/a.js"] }];
   const { loadCategories, run, spans, summaryEl } = setupSpy("", data);
   await loadCategories();
   await run();
@@ -328,9 +346,7 @@ test("run summarizes blocked and allowed hosts", async () => {
 });
 
 test("getSummary returns last summary", async () => {
-  const data = [
-    { name: "Test", hosts: ["https://blocked.com/a.js"] },
-  ];
+  const data = [{ name: "Test", hosts: ["https://blocked.com/a.js"] }];
   const { loadCategories, run, getSummary } = setup("", data);
   await loadCategories();
   await run();
@@ -374,25 +390,31 @@ test("createExtraSection builds extra rows", () => {
   const { createExtraSection, spans } = setupSpy("", []);
   createExtraSection();
   const extras = spans.filter((s) => "data-extra" in s.attrs);
-  // two tests defined in page
-  assert.strictEqual(extras.length, 2);
+  // four tests defined in page
+  assert.strictEqual(extras.length, 4);
 });
 
-test("runExtraTests reports inline and element blocks", () => {
+test("runExtraTests reports extra blocks", () => {
   const adBait = { offsetHeight: 0 };
   const { createExtraSection, runExtraTests, spans, env } = setupSpy("", [], {
     adBait,
+    fetch: () => Promise.reject(new Error("blocked")),
   });
   env.window.__adBaitLoaded = undefined;
+  env.window.__iframeBaitLoaded = undefined;
   createExtraSection();
   runExtraTests();
   const extras = Object.fromEntries(
     spans
       .filter((s) => "data-extra" in s.attrs)
-      .map((s) => [s.attrs["data-extra"], s])
+      .map((s) => [s.attrs["data-extra"], s]),
   );
   assert.strictEqual(extras["inline-script"]._text, "Blocked");
   assert.ok(extras["inline-script"].classList.added.includes("ok"));
   assert.strictEqual(extras["element-hiding"]._text, "Blocked");
   assert.ok(extras["element-hiding"].classList.added.includes("ok"));
+  assert.strictEqual(extras["iframe-bait"]._text, "Blocked");
+  assert.ok(extras["iframe-bait"].classList.added.includes("ok"));
+  assert.strictEqual(extras["fetch-bait"]._text, "Blocked");
+  assert.ok(extras["fetch-bait"].classList.added.includes("ok"));
 });
