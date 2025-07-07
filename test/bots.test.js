@@ -28,11 +28,11 @@ function createEl(tag) {
   };
 }
 
-function setup(navigatorProps = {}, windowProps = {}) {
+function setup(navigatorProps = {}, windowProps = {}, docHooks = {}) {
   const resultsEl = createEl("div");
   const summaryEl = createEl("div");
   const document = {
-    createElement: createEl,
+    createElement: docHooks.createElement || createEl,
     getElementById(id) {
       if (id === "results") return resultsEl;
       if (id === "summary") return summaryEl;
@@ -63,9 +63,30 @@ test("includes new checks", () => {
   const names = checks.map((c) => c.name);
   assert.ok(names.includes("Missing permissions API"));
   assert.ok(names.includes("No Chrome object"));
+  assert.ok(names.includes("Software WebGL renderer"));
 });
 
 test("flags when permissions and chrome missing", () => {
   const { flagged } = setup({ permissions: undefined }, { chrome: undefined });
   assert.strictEqual(flagged, 2);
+});
+
+test("flags software WebGL renderer", () => {
+  function createCanvas() {
+    const el = createEl("canvas");
+    el.getContext = () => ({
+      getExtension: () => ({ UNMASKED_RENDERER_WEBGL: 1 }),
+      getParameter: (p) => (p === 1 ? "SwiftShader" : "SwiftShader"),
+    });
+    return el;
+  }
+  const { flagged } = setup(
+    {},
+    { chrome: {} },
+    {
+      createElement: (tag) =>
+        tag === "canvas" ? createCanvas() : createEl(tag),
+    },
+  );
+  assert.strictEqual(flagged, 1);
 });

@@ -101,6 +101,7 @@
       <a href="index.html">Ad Test</a>
       <a href="bots.html">Bots</a>
       <a href="fingerprint.html">Fingerprint</a>
+      <a href="network.html">Network</a>
     </nav>
     <h1>Bot Detection</h1>
     <div id="results"></div>
@@ -138,6 +139,24 @@
               );
             } catch (e) {
               return true;
+            }
+          },
+        },
+        {
+          name: "Software WebGL renderer",
+          fn: () => {
+            try {
+              const c = document.createElement("canvas");
+              const gl =
+                c.getContext("webgl") || c.getContext("experimental-webgl");
+              if (!gl) return false;
+              const dbg = gl.getExtension("WEBGL_debug_renderer_info");
+              const renderer = dbg
+                ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)
+                : gl.getParameter(gl.RENDERER);
+              return /swiftshader|software/i.test(renderer);
+            } catch (e) {
+              return false;
             }
           },
         },

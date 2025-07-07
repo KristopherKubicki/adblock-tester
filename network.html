@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Network Tools</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap");
+      :root {
+        font-family: "Inter", system-ui, sans-serif;
+        font-size: 16px;
+        --bg-dark: #111;
+        --bg-light: #1e1e1e;
+        --accent-green: #16a34a;
+      }
+      body {
+        margin: 0;
+        padding: 1rem;
+        background: var(--bg-dark);
+        color: #eee;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+        gap: 1rem;
+      }
+      nav {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+      }
+      nav a {
+        color: #eee;
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      nav a:hover {
+        text-decoration: underline;
+      }
+      h1 {
+        margin: 0 0 0.5rem;
+        text-align: center;
+        font-size: clamp(1.5rem, 5vw, 2rem);
+      }
+      section {
+        background: var(--bg-light);
+        padding: 1rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        overflow: auto;
+      }
+      label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      input {
+        width: 8rem;
+      }
+      pre {
+        margin: 0;
+        white-space: pre-wrap;
+        font-size: 0.8rem;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <a href="index.html">Ad Test</a>
+      <a href="bots.html">Bots</a>
+      <a href="fingerprint.html">Fingerprint</a>
+      <a href="network.html">Network</a>
+    </nav>
+    <h1>Network Tools</h1>
+    <section>
+      <div>
+        <label>Target:
+          <input id="traceTarget" placeholder="example.com" />
+        </label>
+        <button id="runTrace">Run Trace</button>
+      </div>
+      <pre id="traceOutput"></pre>
+      <button id="scanBtn">Scan 192.168.0.1-20</button>
+      <pre id="scanOutput"></pre>
+    </section>
+    <script>
+      async function runTrace() {
+        const host = document.getElementById('traceTarget').value.trim();
+        const out = document.getElementById('traceOutput');
+        if (!host) return;
+        out.textContent = 'Tracing...';
+        try {
+          const res = await fetch('https://api.hackertarget.com/mtr/?q=' + encodeURIComponent(host));
+          out.textContent = await res.text();
+        } catch {
+          out.textContent = 'Trace failed';
+        }
+      }
+      document.getElementById('runTrace').addEventListener('click', runTrace);
+
+      async function scan() {
+        const out = document.getElementById('scanOutput');
+        out.textContent = 'Scanning...';
+        const found = [];
+        const base = 'http://192.168.0.';
+        for (let i = 1; i <= 20; i++) {
+          const img = new Image();
+          img.src = base + i + '/favicon.ico';
+          await new Promise((r) => {
+            const t = setTimeout(r, 1000);
+            img.onload = () => {
+              clearTimeout(t);
+              found.push(base + i);
+              r();
+            };
+            img.onerror = () => {
+              clearTimeout(t);
+              r();
+            };
+          });
+        }
+        out.textContent = found.length ? 'Found: ' + found.join(', ') : 'No devices found';
+      }
+      document.getElementById('scanBtn').addEventListener('click', scan);
+    </script>
+  </body>
+</html>
