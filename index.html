@@ -182,26 +182,26 @@
   </head>
   <body>
     <nav>
-      <a href="index.html">Ad Test</a>
-      <a href="bots.html">Bots</a>
-      <a href="fingerprint.html">Fingerprint</a>
+      <a href="index.html" title="Run the ad-block test">Ad Test</a>
+      <a href="bots.html" title="Detect common bot traits">Bots</a>
+      <a href="fingerprint.html" title="View browser fingerprint">Fingerprint</a>
     </nav>
     <h1>Ad‑block Quick Test</h1>
     <div id="controls">
-      <label
-        >Timeout (ms): <input id="timeoutInput" type="number" min="100"
+      <label title="Time to wait for each request before marking blocked">
+          Timeout (ms): <input id="timeoutInput" type="number" min="100"
       /></label>
-      <label
-        >Custom host(s):
+      <label title="Comma-separated URLs to test">
+          Custom host(s):
         <input id="customHostsInput" placeholder="https://example.com/ad.js"
       /></label>
-      <button id="applyTimeout">Run Test</button>
-      <button id="copyResults" disabled>Copy Results</button>
+      <button id="applyTimeout" title="Run the test">Run Test</button>
+      <button id="copyResults" title="Copy summary" disabled>Copy Results</button>
     </div>
     <div id="results"></div>
     <div id="summary"></div>
     <meter id="scoreMeter" min="0" max="100" value="0"></meter>
-    <div id="progressContainer"><div id="progressBar"></div></div>
+    <div id="progressContainer"><div id="progressBar" title="Overall progress"></div></div>
     <script id="ad-bait">
       window.__adBaitLoaded = true;
     </script>
@@ -238,12 +238,14 @@
           id: "inline-script",
           group: "Script",
           name: "Inline Script Bait",
+            tip: "Checks if an inline script loads",
           isBlocked: () => window.__adBaitLoaded !== true,
         },
         {
           id: "element-hiding",
           group: "DOM",
           name: "Element Hiding",
+            tip: "Detects if an element is hidden",
           isBlocked: () => {
             const el = document.getElementById("adBait");
             if (!el) return false;
@@ -259,12 +261,14 @@
           id: "iframe-bait",
           group: "DOM",
           name: "Iframe Bait",
+            tip: "Checks if an iframe loads",
           isBlocked: () => window.__iframeBaitLoaded !== true,
         },
         {
           id: "fetch-bait",
           group: "Network",
           name: "Fetch Bait",
+            tip: "Detects if a fetch request is blocked",
           isBlocked: () => window.__fetchBaitLoaded !== true,
         },
       ];
@@ -330,6 +334,7 @@
         const wheel = document.createElement("div");
         wheel.className = "wheel";
         wheel.setAttribute("style", "--p:0");
+        wheel.title = "Blocked percentage for this category";
         const wheelLabel = document.createElement("span");
         wheelLabel.textContent = "0%";
         wheel.appendChild(wheelLabel);
@@ -361,6 +366,7 @@
           row.className = "host";
           const label = document.createElement("span");
           label.textContent = t.name;
+          row.title = t.tip;
           row.appendChild(label);
           const status = document.createElement("span");
           status.className = "status badge";
@@ -462,6 +468,7 @@
           const statusSpan = document.createElement("span");
           statusSpan.className =
             "status badge " + (isBlocked ? "ok badge--ok" : "fail badge--fail");
+          statusSpan.title = isBlocked ? "Request was blocked" : "Request was allowed";
           statusSpan.textContent = isBlocked ? "Blocked" : "Allowed";
           row.appendChild(hostSpan);
           row.appendChild(statusSpan);
