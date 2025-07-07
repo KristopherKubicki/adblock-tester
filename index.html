@@ -182,6 +182,19 @@
         padding: 0.25rem 0.75rem;
         border-radius: 0.25rem;
       }
+      footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 0.75rem;
+        padding: 0.25rem 0;
+        background: var(--bg-dark);
+      }
+      footer a {
+        color: inherit;
+      }
       @media (prefers-color-scheme: light) {
         :root {
           --bg-dark: #fafafa;
@@ -198,6 +211,7 @@
       <a href="index.html">Ad Test</a>
       <a href="bots.html">Bots</a>
       <a href="fingerprint.html">Fingerprint</a>
+      <a href="network.html">Network</a>
     </nav>
     <h1>Ad‑block Quick Test</h1>
     <div id="controls">
@@ -527,5 +541,11 @@
 
       loadCategories().then(run);
     </script>
+    <footer>
+      <a href="https://github.com/kristopherkubicki/adblock-tester"
+        >Adblock Tester</a
+      >
+      • Version 1.0.0
+    </footer>
   </body>
 </html>

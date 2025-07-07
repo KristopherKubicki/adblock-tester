@@ -85,6 +85,19 @@
       .badge--fail {
         background: var(--warn-red);
       }
+      footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 0.75rem;
+        padding: 0.25rem 0;
+        background: var(--bg-dark);
+      }
+      footer a {
+        color: inherit;
+      }
       @media (prefers-color-scheme: light) {
         :root {
           --bg-dark: #fafafa;
@@ -101,10 +114,12 @@
       <a href="index.html">Ad Test</a>
       <a href="bots.html">Bots</a>
       <a href="fingerprint.html">Fingerprint</a>
+      <a href="network.html">Network</a>
     </nav>
     <h1>Bot Detection</h1>
     <div id="results"></div>
     <div id="summary"></div>
+    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/botd@3/dist/botd.min.js"></script>
     <script>
       const checks = [
         { name: "navigator.webdriver", fn: () => navigator.webdriver },
@@ -185,6 +200,35 @@
         resultsEl.appendChild(row);
       });
       summaryEl.textContent = `${flagged} suspicious flag${flagged === 1 ? "" : "s"} detected`;
+
+      if (window.Botd && window.Botd.load) {
+        window.Botd.load()
+          .then((botd) => botd.detect())
+          .then((r) => {
+            const row = document.createElement("div");
+            row.className = "check";
+            const name = document.createElement("span");
+            name.textContent = "BotD";
+            const status = document.createElement("span");
+            const res = r.bot;
+            if (res) flagged += 1;
+            status.textContent = res ? "Bot" : "Human";
+            status.className =
+              "status badge " + (res ? "fail badge--fail" : "ok badge--ok");
+            row.appendChild(name);
+            row.appendChild(status);
+            resultsEl.appendChild(row);
+            summaryEl.textContent = `${flagged} suspicious flag${
+              flagged === 1 ? "" : "s"
+            } detected`;
+          });
+      }
     </script>
+    <footer>
+      <a href="https://github.com/kristopherkubicki/adblock-tester"
+        >Adblock Tester</a
+      >
+      • Version 1.0.0
+    </footer>
   </body>
 </html>

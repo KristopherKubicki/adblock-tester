@@ -55,6 +55,19 @@
         margin: 0 0 0.5rem 0;
         word-break: break-all;
       }
+      footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 0.75rem;
+        padding: 0.25rem 0;
+        background: var(--bg-dark);
+      }
+      footer a {
+        color: inherit;
+      }
       @media (prefers-color-scheme: light) {
         :root {
           --bg-dark: #fafafa;
@@ -71,6 +84,7 @@
       <a href="index.html">Ad Test</a>
       <a href="bots.html">Bots</a>
       <a href="fingerprint.html">Fingerprint</a>
+      <a href="network.html">Network</a>
     </nav>
     <h1>Browser Fingerprint</h1>
     <div id="fp"></div>
@@ -198,8 +212,37 @@
         });
       }
 
+      function getConnectionInfo() {
+        const c =
+          navigator.connection ||
+          navigator.mozConnection ||
+          navigator.webkitConnection;
+        if (!c)
+          return { type: "n/a", downlink: "n/a" };
+        return {
+          type: c.effectiveType || c.type || "n/a",
+          downlink: c.downlink || "n/a",
+        };
+      }
+
+      function getBatteryInfo() {
+        if (!navigator.getBattery) {
+          return Promise.resolve({ level: "n/a", charging: "n/a" });
+        }
+        return navigator
+          .getBattery()
+          .then((b) => ({
+            level: `${Math.round(b.level * 100)}%`,
+            charging: b.charging,
+          }))
+          .catch(() => ({ level: "n/a", charging: "n/a" }));
+      }
+
       async function render() {
         const { vendor: webglVendor, renderer: webglRenderer } = getWebGLInfo();
+        const { type: connectionType, downlink } = getConnectionInfo();
+        const { level: batteryLevel, charging: batteryCharging } =
+          await getBatteryInfo();
         const data = {
           "IP Address": await getPublicIP(),
           "Local IPs": await getLocalIPs(),
@@ -216,6 +259,9 @@
           "Local Storage": !!window.localStorage,
           "Session Storage": !!window.sessionStorage,
           "Touch Points": navigator.maxTouchPoints,
+          Connection: `${connectionType} (${downlink}Mbps)`,
+          "Battery Level": batteryLevel,
+          "Battery Charging": batteryCharging,
           Plugins: Array.from(navigator.plugins || [])
             .map((p) => p.name)
             .join(", "),
@@ -240,5 +286,11 @@
 
       render();
     </script>
+    <footer>
+      <a href="https://github.com/kristopherkubicki/adblock-tester"
+        >Adblock Tester</a
+      >
+      • Version 1.0.0
+    </footer>
   </body>
 </html>
