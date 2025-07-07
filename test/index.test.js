@@ -43,27 +43,32 @@ function setup(query, data, hooks = {}) {
     document,
     location,
     URLSearchParams,
-    fetch: (url) => {
+    fetch: (url, opts = {}) => {
       if (url.includes("categories.json")) {
         return Promise.resolve({ json: () => Promise.resolve(data) });
       }
-      return hooks.fetch ? hooks.fetch(url) : Promise.resolve({ ok: true });
-    },
-    Image:
-      hooks.Image ||
-      class {
-        constructor() {
-          this.width = 0;
-          this.height = 0;
-        }
-        set src(url) {
-          if (url.includes("blocked")) {
-            this.onerror && this.onerror();
-          } else {
-            this.onload && this.onload();
+      return new Promise((resolve, reject) => {
+        if (opts.signal) {
+          if (opts.signal.aborted) {
+            const err = new Error("aborted");
+            err.name = "AbortError";
+            return reject(err);
           }
+          opts.signal.addEventListener("abort", () => {
+            const err = new Error("aborted");
+            err.name = "AbortError";
+            reject(err);
+          });
         }
-      },
+        if (hooks.fetch) {
+          Promise.resolve(hooks.fetch(url)).then(resolve, reject);
+        } else if (url.includes("blocked")) {
+          reject(new Error("blocked"));
+        } else {
+          resolve({});
+        }
+      });
+    },
     setTimeout: hooks.setTimeout || setTimeout,
     clearTimeout: hooks.clearTimeout || clearTimeout,
     console,
@@ -74,7 +79,6 @@ function setup(query, data, hooks = {}) {
     "location",
     "URLSearchParams",
     "fetch",
-    "Image",
     "setTimeout",
     "clearTimeout",
     "console",
@@ -86,7 +90,6 @@ function setup(query, data, hooks = {}) {
     env.location,
     env.URLSearchParams,
     env.fetch,
-    env.Image,
     env.setTimeout,
     env.clearTimeout,
     env.console,
@@ -181,27 +184,32 @@ function setupSpy(query, data, hooks = {}) {
     document,
     location,
     URLSearchParams,
-    fetch: (url) => {
+    fetch: (url, opts = {}) => {
       if (url.includes("categories.json")) {
         return Promise.resolve({ json: () => Promise.resolve(data) });
       }
-      return hooks.fetch ? hooks.fetch(url) : Promise.resolve({ ok: true });
-    },
-    Image:
-      hooks.Image ||
-      class {
-        constructor() {
-          this.width = 0;
-          this.height = 0;
-        }
-        set src(url) {
-          if (url.includes("blocked")) {
-            this.onerror && this.onerror();
-          } else {
-            this.onload && this.onload();
+      return new Promise((resolve, reject) => {
+        if (opts.signal) {
+          if (opts.signal.aborted) {
+            const err = new Error("aborted");
+            err.name = "AbortError";
+            return reject(err);
           }
+          opts.signal.addEventListener("abort", () => {
+            const err = new Error("aborted");
+            err.name = "AbortError";
+            reject(err);
+          });
         }
-      },
+        if (hooks.fetch) {
+          Promise.resolve(hooks.fetch(url)).then(resolve, reject);
+        } else if (url.includes("blocked")) {
+          reject(new Error("blocked"));
+        } else {
+          resolve({});
+        }
+      });
+    },
     setTimeout: hooks.setTimeout || setTimeout,
     clearTimeout: hooks.clearTimeout || clearTimeout,
     console,
@@ -213,7 +221,6 @@ function setupSpy(query, data, hooks = {}) {
     "location",
     "URLSearchParams",
     "fetch",
-    "Image",
     "setTimeout",
     "clearTimeout",
     "console",
@@ -225,7 +232,6 @@ function setupSpy(query, data, hooks = {}) {
     env.location,
     env.URLSearchParams,
     env.fetch,
-    env.Image,
     env.setTimeout,
     env.clearTimeout,
     env.console,
@@ -356,22 +362,20 @@ test("getSummary returns last summary", async () => {
 test("testHost resolves false on load", async () => {
   const { testHost } = setup("", []);
   const res = await testHost("https://allowed.com/a.js");
-  assert.strictEqual(res, false);
+  assert.deepStrictEqual(res, { blocked: false, reason: null });
 });
 
 test("testHost resolves true on error", async () => {
   const { testHost } = setup("", []);
   const res = await testHost("https://blocked.com/a.js");
-  assert.strictEqual(res, true);
+  assert.deepStrictEqual(res, { blocked: true, reason: "other" });
 });
 
 test("testHost resolves true on timeout", async () => {
   let timer;
   let callback;
   const hooks = {
-    Image: class {
-      set src(_) {}
-    },
+    fetch: () => new Promise(() => {}),
     setTimeout(fn, ms) {
       callback = fn;
       timer = 1;
@@ -383,7 +387,7 @@ test("testHost resolves true on timeout", async () => {
   const promise = testHost("https://timeout.com/a.js");
   callback();
   const res = await promise;
-  assert.strictEqual(res, true);
+  assert.deepStrictEqual(res, { blocked: true, reason: "extension" });
 });
 
 test("createExtraSection builds extra rows", () => {
