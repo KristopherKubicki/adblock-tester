@@ -178,10 +178,15 @@
       }
 
       function getPublicIP() {
-        return fetch("https://api.ipify.org?format=json")
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 3000);
+        return fetch("https://api.ipify.org?format=json", {
+          signal: controller.signal,
+        })
           .then((r) => r.json())
           .then((d) => d.ip)
-          .catch(() => "n/a");
+          .catch(() => "n/a")
+          .finally(() => clearTimeout(timeout));
       }
 
       function getLocalIPs() {
@@ -257,11 +262,16 @@
       async function render() {
         const { vendor: webglVendor, renderer: webglRenderer } = getWebGLInfo();
         const { type: connectionType, downlink } = getConnectionInfo();
-        const { level: batteryLevel, charging: batteryCharging } =
-          await getBatteryInfo();
+        const [battery, ip, local, geo] = await Promise.all([
+          getBatteryInfo(),
+          getPublicIP(),
+          getLocalIPs(),
+          getGeo(),
+        ]);
+        const { level: batteryLevel, charging: batteryCharging } = battery;
         const data = {
-          "IP Address": await getPublicIP(),
-          "Local IPs": await getLocalIPs(),
+          "IP Address": ip,
+          "Local IPs": local,
           "User Agent": navigator.userAgent,
           Languages: navigator.languages ? navigator.languages.join(", ") : "",
           Platform: navigator.platform,
@@ -285,7 +295,7 @@
           "WebGL Vendor": webglVendor,
           "WebGL Renderer": webglRenderer,
           Fonts: detectFonts(),
-          Geolocation: await getGeo(),
+          Geolocation: geo,
         };
         const container = document.getElementById("fp");
         const dl = document.createElement("dl");
