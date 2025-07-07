@@ -394,8 +394,8 @@ test("createExtraSection builds extra rows", () => {
   const { createExtraSection, spans } = setupSpy("", []);
   createExtraSection();
   const extras = spans.filter((s) => "data-extra" in s.attrs);
-  // four tests defined in page
-  assert.strictEqual(extras.length, 4);
+  // seven tests defined in page
+  assert.strictEqual(extras.length, 7);
 });
 
 test("runExtraTests reports extra blocks", () => {
@@ -406,6 +406,10 @@ test("runExtraTests reports extra blocks", () => {
   });
   env.window.__adBaitLoaded = undefined;
   env.window.__iframeBaitLoaded = undefined;
+  env.window.__fetchBaitLoaded = undefined;
+  env.window.__wsBaitLoaded = undefined;
+  env.window.__storageBaitLoaded = undefined;
+  env.window.__cssBaitLoaded = undefined;
   createExtraSection();
   runExtraTests();
   const extras = Object.fromEntries(
@@ -421,4 +425,10 @@ test("runExtraTests reports extra blocks", () => {
   assert.ok(extras["iframe-bait"].classList.added.includes("ok"));
   assert.strictEqual(extras["fetch-bait"]._text, "Blocked");
   assert.ok(extras["fetch-bait"].classList.added.includes("ok"));
+  assert.strictEqual(extras["ws-bait"]._text, "Blocked");
+  assert.ok(extras["ws-bait"].classList.added.includes("ok"));
+  assert.strictEqual(extras["storage-bait"]._text, "Blocked");
+  assert.ok(extras["storage-bait"].classList.added.includes("ok"));
+  assert.strictEqual(extras["css-bait"]._text, "Blocked");
+  assert.ok(extras["css-bait"].classList.added.includes("ok"));
 });
