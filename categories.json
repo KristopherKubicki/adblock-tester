@@ -30055,7 +30055,7 @@
     ]
   },
   {
-    "name": "Social Widgets",
+  "name": "Social Widgets",
     "hosts": [
       "https://-ShareButton2.",
       "https://-Social-Sidebar",
@@ -30095,6 +30095,23 @@
       "https://_social_bookmark",
       "https://_social_bookmarks",
       "https://_social_footer_"
+  ]
+  }
+ ,
+  {
+    "name": "Malware",
+    "hosts": [
+      "https://malicious.example.com",
+      "https://phishing.test",
+      "https://ransomware.example"
+    ]
+  },
+  {
+    "name": "Gambling",
+    "hosts": [
+      "https://casino.example",
+      "https://slots.test",
+      "https://betting.example.com"
     ]
   }
 ]
