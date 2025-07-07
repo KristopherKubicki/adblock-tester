@@ -143,6 +143,9 @@
           fn: () =>
             navigator.hardwareConcurrency && navigator.hardwareConcurrency < 2,
         },
+        { name: "Battery API missing", fn: () => !navigator.getBattery },
+        { name: "No DeviceMotion", fn: () => !window.DeviceMotionEvent },
+        { name: "No HID API", fn: () => !navigator.hid },
         {
           name: "No WebGL",
           fn: () => {
