@@ -48,10 +48,12 @@ function setup(navigatorProps = {}, windowProps = {}, docHooks = {}) {
       cookieEnabled: true,
       hardwareConcurrency: 4,
       permissions: {},
+      getBattery: () => Promise.resolve(),
+      hid: {},
     },
     navigatorProps,
   );
-  const windowObj = Object.assign({}, windowProps);
+  const windowObj = Object.assign({ DeviceMotionEvent: function () {}, chrome: {} , hid: {} }, windowProps);
   const fn = new Function("navigator", "window", "document", wrapper);
   const res = fn(navigatorObj, windowObj, document);
   res.summary = summaryEl.textContent;
@@ -64,6 +66,9 @@ test("includes new checks", () => {
   assert.ok(names.includes("Missing permissions API"));
   assert.ok(names.includes("No Chrome object"));
   assert.ok(names.includes("Software WebGL renderer"));
+  assert.ok(names.includes("Battery API missing"));
+  assert.ok(names.includes("No DeviceMotion"));
+  assert.ok(names.includes("No HID API"));
 });
 
 test("flags when permissions and chrome missing", () => {
@@ -89,6 +94,14 @@ test("flags software WebGL renderer", () => {
     },
   );
   assert.strictEqual(flagged, 1);
+});
+
+test("flags missing sensor APIs", () => {
+  const { flagged } = setup(
+    { getBattery: undefined, hid: undefined },
+    { DeviceMotionEvent: undefined, chrome: {} },
+  );
+  assert.strictEqual(flagged, 3);
 });
 
 test("calls BotD when available", () => {
