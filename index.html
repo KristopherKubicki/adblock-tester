@@ -248,6 +248,33 @@
         })
         .catch(() => {});
     </script>
+    <script id="ws-bait">
+      try {
+        new WebSocket("wss://example.com/ad");
+        window.__wsBaitLoaded = true;
+      } catch (e) {}
+    </script>
+    <script id="storage-bait">
+      try {
+        localStorage.setItem("ad-test", "1");
+        window.__storageBaitLoaded = localStorage.getItem("ad-test") === "1";
+        localStorage.removeItem("ad-test");
+      } catch (e) {}
+    </script>
+    <script id="css-bait">
+      try {
+        const style = document.createElement("style");
+        style.textContent = ".ad-css-bait{color:rgb(1,2,3)}";
+        document.head.appendChild(style);
+        const div = document.createElement("div");
+        div.className = "ad-css-bait";
+        document.body.appendChild(div);
+        const applied = getComputedStyle(div).color === "rgb(1, 2, 3)";
+        style.remove();
+        div.remove();
+        if (applied) window.__cssBaitLoaded = true;
+      } catch (e) {}
+    </script>
     <iframe
       id="iframeBait"
       style="width: 1px; height: 1px; position: absolute; left: -9999px"
@@ -302,6 +329,24 @@
           group: "Network",
           name: "Fetch Bait",
           isBlocked: () => window.__fetchBaitLoaded !== true,
+        },
+        {
+          id: "ws-bait",
+          group: "Network",
+          name: "WebSocket Bait",
+          isBlocked: () => window.__wsBaitLoaded !== true,
+        },
+        {
+          id: "storage-bait",
+          group: "Storage",
+          name: "Storage Bait",
+          isBlocked: () => window.__storageBaitLoaded !== true,
+        },
+        {
+          id: "css-bait",
+          group: "CSS",
+          name: "CSS Rule Bait",
+          isBlocked: () => window.__cssBaitLoaded !== true,
         },
       ];
 
