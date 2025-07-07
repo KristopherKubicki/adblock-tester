@@ -13,6 +13,9 @@
         --bg-light: #1e1e1e;
         --accent-green: #16a34a;
         --warn-red: #dc2626;
+        --ext-blue: #2563eb;
+        --dns-red: #ef4444;
+        --other-yellow: #facc15;
       }
       body {
         margin: 0;
@@ -67,7 +70,10 @@
       }
       .wheel {
         position: relative;
-        --p: 0;
+        --ext: 0;
+        --dns: 0;
+        --other: 0;
+        --block: 0;
         width: 90px;
         height: 90px;
         margin: 0 auto 0.5rem;
@@ -76,7 +82,10 @@
         align-items: center;
         justify-content: center;
         background: conic-gradient(
-          var(--accent-green) calc(var(--p) * 1%),
+          var(--ext-blue) calc(var(--ext) * 1%),
+          var(--dns-red) calc(var(--ext) * 1%) calc(var(--dns) * 1%),
+          var(--other-yellow) calc(var(--dns) * 1%) calc(var(--other) * 1%),
+          var(--accent-green) calc(var(--other) * 1%) calc(var(--block) * 1%),
           var(--bg-light) 0
         );
       }
@@ -386,26 +395,31 @@
       let tested = 0;
       let blocked = 0;
 
-      // Test helper – use Image so we can rely on onerror/onload.
-      const testHost = (url) =>
-        new Promise((resolve) => {
-          const img = new Image();
-          const timer = setTimeout(() => {
-            img.src = "";
-            resolve(true); // treat as blocked on timeout
-          }, TIMEOUT_MS);
-
-          img.onerror = () => {
-            clearTimeout(timer);
-            resolve(true);
-          };
-          img.onload = () => {
-            clearTimeout(timer);
-            resolve(false);
-          };
-          // Tweak: add cache‑buster so the request isn’t cached between runs
-          img.src = url + (url.includes("?") ? "&" : "?") + "cb=" + Date.now();
-        });
+      const testHost = async (url) => {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+        try {
+          await fetch(
+            url + (url.includes("?") ? "&" : "?") + "cb=" + Date.now(),
+            {
+              mode: "no-cors",
+              signal: controller.signal,
+            },
+          );
+          clearTimeout(timer);
+          return { blocked: false, reason: null };
+        } catch (e) {
+          clearTimeout(timer);
+          if (e.name === "AbortError") {
+            return { blocked: true, reason: "extension" };
+          }
+          const msg = String(e || "");
+          if (/resolve|dns/i.test(msg)) {
+            return { blocked: true, reason: "dns" };
+          }
+          return { blocked: true, reason: "other" };
+        }
+      };
 
       const runExtraTests = () => {
         extraTests.forEach((t) => {
@@ -425,7 +439,10 @@
         tested = 0;
         blocked = 0;
         categories.forEach((c) => {
-          c.results = { tested: 0, blocked: 0 };
+          c.results = {
+            tested: 0,
+            blocked: { extension: 0, dns: 0, other: 0 },
+          };
         });
 
         const hostToCat = new Map();
@@ -441,12 +458,25 @@
         const updateChart = (cat) => {
           const wheel = wheelMap.get(cat);
           if (!wheel) return;
-          const { tested: t, blocked: b } = cat.results;
-          const pct = t ? Math.round((b / t) * 100) : 0;
+          const {
+            tested: t,
+            blocked: { extension: ext, dns, other },
+          } = cat.results;
+          const total = ext + dns + other;
+          const pct = t ? Math.round((total / t) * 100) : 0;
+          const pExt = t ? (ext / t) * 100 : 0;
+          const pDns = pExt + (t ? (dns / t) * 100 : 0);
+          const pOther = pDns + (t ? (other / t) * 100 : 0);
           if (wheel.style && wheel.style.setProperty) {
-            wheel.style.setProperty("--p", pct);
+            wheel.style.setProperty("--ext", pExt);
+            wheel.style.setProperty("--dns", pDns);
+            wheel.style.setProperty("--other", pOther);
+            wheel.style.setProperty("--block", pct);
           } else {
-            wheel.setAttribute("style", `--p:${pct}`);
+            wheel.setAttribute(
+              "style",
+              `--ext:${pExt};--dns:${pDns};--other:${pOther};--block:${pct}`,
+            );
           }
           const span = wheel.childNodes[0];
           if (span) span.textContent = pct + "%";
@@ -454,7 +484,8 @@
 
         categories.forEach(updateChart);
 
-        const addRow = (cat, host, isBlocked) => {
+        const addRow = (cat, host, result) => {
+          const { blocked: isBlocked, reason } = result;
           const row = document.createElement("div");
           row.className = "host";
           const hostSpan = document.createElement("span");
@@ -475,15 +506,15 @@
         };
 
         const promises = allHosts.map((h) =>
-          testHost(h).then((isBlocked) => {
+          testHost(h).then((result) => {
             tested++;
             const cat = hostToCat.get(h);
             cat.results.tested++;
-            if (isBlocked) {
+            if (result.blocked) {
               blocked++;
-              cat.results.blocked++;
+              cat.results.blocked[result.reason]++;
             }
-            addRow(cat, h, isBlocked);
+            addRow(cat, h, result);
             updateProgress();
             updateChart(cat);
           }),
