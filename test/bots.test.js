@@ -6,7 +6,7 @@ const { test } = require("node:test");
 const root = __dirname ? path.resolve(__dirname, "..") : "..";
 const html = fs.readFileSync(path.join(root, "bots.html"), "utf8");
 const script = /<script>([\s\S]*?)<\/script>/.exec(html)[1];
-const wrapper = `${script}\nreturn { checks, flagged };\n//# sourceURL=bots.inline.js`;
+const wrapper = `${script}\nreturn { checks, botReady: window.botReady };\n//# sourceURL=bots.inline.js`;
 
 function createEl(tag) {
   return {
@@ -28,7 +28,12 @@ function createEl(tag) {
   };
 }
 
-function setup(navigatorProps = {}, windowProps = {}, docHooks = {}) {
+function setup(
+  navigatorProps = {},
+  windowProps = {},
+  docHooks = {},
+  fetchImpl = () => Promise.resolve({ json: () => ({}) }),
+) {
   const resultsEl = createEl("div");
   const summaryEl = createEl("div");
   const document = {
@@ -51,10 +56,11 @@ function setup(navigatorProps = {}, windowProps = {}, docHooks = {}) {
     },
     navigatorProps,
   );
-  const windowObj = Object.assign({}, windowProps);
+  const windowObj = Object.assign({ fetch: fetchImpl }, windowProps);
   const fn = new Function("navigator", "window", "document", wrapper);
   const res = fn(navigatorObj, windowObj, document);
-  res.summary = summaryEl.textContent;
+  res.window = windowObj;
+  res.summaryEl = summaryEl;
   return res;
 }
 
@@ -66,12 +72,16 @@ test("includes new checks", () => {
   assert.ok(names.includes("Software WebGL renderer"));
 });
 
-test("flags when permissions and chrome missing", () => {
-  const { flagged } = setup({ permissions: undefined }, { chrome: undefined });
-  assert.strictEqual(flagged, 2);
+test("flags when permissions and chrome missing", async () => {
+  const { botReady, window } = setup(
+    { permissions: undefined },
+    { chrome: undefined },
+  );
+  await botReady;
+  assert.strictEqual(window.botResults.flagged, 2);
 });
 
-test("flags software WebGL renderer", () => {
+test("flags software WebGL renderer", async () => {
   function createCanvas() {
     const el = createEl("canvas");
     el.getContext = () => ({
@@ -80,7 +90,7 @@ test("flags software WebGL renderer", () => {
     });
     return el;
   }
-  const { flagged } = setup(
+  const { botReady, window } = setup(
     {},
     { chrome: {} },
     {
@@ -88,5 +98,17 @@ test("flags software WebGL renderer", () => {
         tag === "canvas" ? createCanvas() : createEl(tag),
     },
   );
-  assert.strictEqual(flagged, 1);
+  await botReady;
+  assert.strictEqual(window.botResults.flagged, 1);
+});
+
+test("flags forwarded header", async () => {
+  const fetchStub = () =>
+    Promise.resolve({
+      json: () =>
+        Promise.resolve({ headers: { "X-Forwarded-For": "1.2.3.4" } }),
+    });
+  const { botReady, window } = setup({}, {}, {}, fetchStub);
+  await botReady;
+  assert.strictEqual(window.botResults.flagged, 1);
 });

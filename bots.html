@@ -165,26 +165,47 @@
             "ontouchstart" in window &&
             !/Mobi|Android|iP(hone|ad)/i.test(navigator.userAgent),
         },
+        {
+          name: "Forwarded header",
+          fn: async () => {
+            try {
+              const r = await fetch("https://httpbin.org/headers");
+              const d = await r.json();
+              return !!(
+                d.headers["X-Forwarded-For"] || d.headers["x-forwarded-for"]
+              );
+            } catch {
+              return false;
+            }
+          },
+        },
       ];
       const resultsEl = document.getElementById("results");
       const summaryEl = document.getElementById("summary");
       let flagged = 0;
-      checks.forEach((c) => {
-        const row = document.createElement("div");
-        row.className = "check";
-        const name = document.createElement("span");
-        name.textContent = c.name;
-        const status = document.createElement("span");
-        const res = c.fn();
-        if (res) flagged += 1;
-        status.textContent = res ? "Yes" : "No";
-        status.className =
-          "status badge " + (res ? "fail badge--fail" : "ok badge--ok");
-        row.appendChild(name);
-        row.appendChild(status);
-        resultsEl.appendChild(row);
+      window.botReady = Promise.all(
+        checks.map(async (c) => {
+          const row = document.createElement("div");
+          row.className = "check";
+          const name = document.createElement("span");
+          name.textContent = c.name;
+          const status = document.createElement("span");
+          let res = false;
+          try {
+            res = await c.fn();
+          } catch {}
+          if (res) flagged += 1;
+          status.textContent = res ? "Yes" : "No";
+          status.className =
+            "status badge " + (res ? "fail badge--fail" : "ok badge--ok");
+          row.appendChild(name);
+          row.appendChild(status);
+          resultsEl.appendChild(row);
+        }),
+      ).then(() => {
+        summaryEl.textContent = `${flagged} suspicious flag${flagged === 1 ? "" : "s"} detected`;
+        window.botResults = { flagged };
       });
-      summaryEl.textContent = `${flagged} suspicious flag${flagged === 1 ? "" : "s"} detected`;
     </script>
   </body>
 </html>
