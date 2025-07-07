@@ -90,3 +90,21 @@ test("flags software WebGL renderer", () => {
   );
   assert.strictEqual(flagged, 1);
 });
+
+test("calls BotD when available", () => {
+  let called = false;
+  setup(
+    {},
+    {
+      Botd: {
+        load: () => {
+          called = true;
+          return Promise.resolve({
+            detect: () => Promise.resolve({ bot: false }),
+          });
+        },
+      },
+    },
+  );
+  assert.ok(called);
+});
