@@ -85,6 +85,19 @@
       .badge--fail {
         background: var(--warn-red);
       }
+      footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 0.75rem;
+        padding: 0.25rem 0;
+        background: var(--bg-dark);
+      }
+      footer a {
+        color: inherit;
+      }
       @media (prefers-color-scheme: light) {
         :root {
           --bg-dark: #fafafa;
@@ -211,5 +224,11 @@
           });
       }
     </script>
+    <footer>
+      <a href="https://github.com/kristopherkubicki/adblock-tester"
+        >Adblock Tester</a
+      >
+      • Version 1.0.0
+    </footer>
   </body>
 </html>
