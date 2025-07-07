@@ -84,7 +84,7 @@
         return out.toString();
       }
 
-      function getCanvasHash() {
+      function getCanvasInfo() {
         try {
           const c = document.createElement("canvas");
           c.width = 200;
@@ -96,9 +96,10 @@
           ctx.fillRect(0, 0, 100, 30);
           ctx.fillStyle = "#069";
           ctx.fillText("fingerprint", 2, 15);
-          return hash(c.toDataURL());
+          const dataUrl = c.toDataURL();
+          return { hash: hash(dataUrl), dataUrl };
         } catch {
-          return "n/a";
+          return { hash: "n/a", dataUrl: null };
         }
       }
 
@@ -177,7 +178,9 @@
               resolve(Array.from(ips).join(", ") || "n/a");
               return;
             }
-            const m = /([0-9]{1,3}(?:\.[0-9]{1,3}){3})/.exec(e.candidate.candidate);
+            const m = /([0-9]{1,3}(?:\.[0-9]{1,3}){3})/.exec(
+              e.candidate.candidate,
+            );
             if (m) ips.add(m[1]);
           };
           pc.createOffer().then((o) => pc.setLocalDescription(o));
@@ -193,13 +196,14 @@
               resolve(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
             },
             () => resolve("n/a"),
-            { timeout: 3000 }
+            { timeout: 3000 },
           );
         });
       }
 
       async function render() {
         const { vendor: webglVendor, renderer: webglRenderer } = getWebGLInfo();
+        const { hash: canvasHash, dataUrl: canvasUrl } = getCanvasInfo();
         const data = {
           "IP Address": await getPublicIP(),
           "Local IPs": await getLocalIPs(),
@@ -219,7 +223,8 @@
           Plugins: Array.from(navigator.plugins || [])
             .map((p) => p.name)
             .join(", "),
-          "Canvas Hash": getCanvasHash(),
+          "Canvas Hash": canvasHash,
+          "Canvas Image": canvasUrl,
           "WebGL Vendor": webglVendor,
           "WebGL Renderer": webglRenderer,
           Fonts: detectFonts(),
@@ -231,7 +236,15 @@
           const dt = document.createElement("dt");
           dt.textContent = k;
           const dd = document.createElement("dd");
-          dd.textContent = String(v);
+          if (k === "Canvas Image" && v) {
+            const img = document.createElement("img");
+            img.src = v;
+            img.width = 200;
+            img.height = 50;
+            dd.appendChild(img);
+          } else {
+            dd.textContent = String(v);
+          }
           dl.appendChild(dt);
           dl.appendChild(dd);
         }
